@@ -47,11 +47,11 @@ void MapManager::LoadMap(const std::string& path)
 		}
 		case HashCode("BoxCollision"):
 		{
-			ss >> temp_name;//name vector info
+			ss >> temp_name;
 			ss >> temp_name >> temp_pos.x >> temp_pos.y >> temp_pos.z;
-			collision_centers.emplace_back(std::move(temp_pos));
+			collision_centers.emplace_back(temp_pos);
 			ss >> temp_name >> temp_pos.x >> temp_pos.y >> temp_pos.z;
-			collision_extents.emplace_back(std::move(temp_pos));
+			collision_extents.emplace_back(temp_pos);
 			break;
 		}
 		case HashCode("FilePath"): {
@@ -68,7 +68,7 @@ void MapManager::LoadMap(const std::string& path)
 		}
 		case HashCode("Scale"): {
 			ss >> temp_pos.x >> temp_pos.y >> temp_pos.z;
-			scales.emplace_back(std::move(temp_pos));
+			scales.push_back(temp_pos);
 			break;
 		}
 		}

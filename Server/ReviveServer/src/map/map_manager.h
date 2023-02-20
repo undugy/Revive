@@ -40,7 +40,7 @@ public:
 		}
 		return MapObj();
 	}
-	Vector3 PLAYER_SPAWN_POINT[3]{ //임시 하드코딩
+	Vector3 PLAYER_SPAWN_POINT[3]{ 
 	{2350.0f,300.0f,3150.0f},
 	{2450.0f,300.0f,3150.0f},
 	{2400.0f,300.0f,3150.0f}

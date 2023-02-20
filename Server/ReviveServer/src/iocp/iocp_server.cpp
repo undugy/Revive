@@ -57,7 +57,6 @@ bool IOCPServer::BindListen(const int port_num)
 
 	AcceptEx(m_s_socket, c_socket, accept_buf, 0, sizeof(SOCKADDR_IN) + 16,
 		sizeof(SOCKADDR_IN) + 16, NULL, &accept_ex._wsa_over);
-	cout << "Aceept Called\n";
 	return true;
 }
 
@@ -79,7 +78,6 @@ void IOCPServer::Worker()
 		LONG64 iocp_key;
 		WSAOVERLAPPED* p_over;
 		BOOL ret = GetQueuedCompletionStatus(m_hiocp, &num_byte, (PULONG_PTR)&iocp_key, &p_over, INFINITE);
-		//cout << "GQCS returned.\n";
 		int client_id = static_cast<int>(iocp_key);
 		EXP_OVER* exp_over = reinterpret_cast<EXP_OVER*>(p_over);
 		if (FALSE == ret) {
@@ -102,15 +100,12 @@ void IOCPServer::Worker()
 		case COMP_OP::OP_SEND: {
 			if (num_byte != exp_over->_wsa_buf.len) {
 				Disconnect(client_id);
-				cout << "Send¿¡¼­ »¶³²" << endl;
 			}
 			delete exp_over;
 			break;
 		}
 		case COMP_OP::OP_ACCEPT: {
 			OnAccept(exp_over);
-			cout << "Accept Completed.\n";
-			
 			break;
 		}
 		default:
@@ -132,7 +127,6 @@ void IOCPServer::error_display(int err_no)
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		(LPTSTR)&lpMsgBuf, 0, 0);
 	std::wcout << lpMsgBuf << std::endl;
-	//while (true);
 	LocalFree(lpMsgBuf);
 }
 

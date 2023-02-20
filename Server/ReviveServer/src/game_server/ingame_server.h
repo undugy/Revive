@@ -20,7 +20,7 @@ public:
     void Run();
     void End();
 private:
-    std::unique_ptr< PacketManager>m_PacketManager;
+    std::unique_ptr<PacketManager>m_PacketManager;
    
     
 };

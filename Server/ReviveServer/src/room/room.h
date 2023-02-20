@@ -4,9 +4,7 @@
 #include<atomic>
 #include<chrono>
 #include<array>
-#include"object/bullet.h"
 class Object;
-const int MAX_BULLET=100;
 class Room
 {
 public:
@@ -33,8 +31,7 @@ public:
 	void SetState(ROOM_STATE val) { m_room_state = val; }
 	void SetRoundTime(int seconds);
 	void SetRound(int val) { curr_round = val; }
-	//Bullet* GetBullet(int id) { return m_bullet_pool[id]; }
-	//int GetNewBullet();
+
 	std::vector<int>& GetObjList()
 	{
 		return m_obj_list;
@@ -48,7 +45,6 @@ private:
 	int max_npc;
 	int curr_round;
 	std::vector<int>m_obj_list;
-	//std::array<Bullet*, MAX_BULLET>m_bullet_pool;
 	std::chrono::system_clock::time_point	m_round_time;
 	float m_base_hp = BASE_HP;
 };

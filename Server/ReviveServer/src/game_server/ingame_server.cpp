@@ -86,7 +86,7 @@ void InGameServer::DoTimer(HANDLE hiocp)
 
 void InGameServer::CreateTimer()
 {
-	m_worker_threads.emplace_back(std::thread(&InGameServer::DoTimer,this,m_hiocp));
+	m_worker_threads.emplace_back(&InGameServer::DoTimer,this,m_hiocp);
 	
 }
 

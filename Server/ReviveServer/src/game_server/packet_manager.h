@@ -2,8 +2,6 @@
 #include"define.h"
 #include<concurrent_queue.h>
 #include<thread>
-//#include<concurrent_priority_queue.h>
-
 class MoveObjManager;
 class DB;
 class RoomManager;
@@ -22,7 +20,7 @@ public:
 	
 
 
-	void UpdateObjMove();
+
 	void SpawnEnemy(int room_id);
 	void SpawnEnemyByTime(int enemy_id,int room_id);
 	void DoEnemyMove(int room_id, int enemy_id);
@@ -74,16 +72,14 @@ public:
 private:
 	
 	
-	RoomManager* m_room_manager;
-	//MoveObjManager* m_move_obj_manager;
-	DB* m_db;
-	DB* m_db2;
-	MapManager* m_map_manager;
+	unique_ptr<RoomManager> m_room_manager;
+	DB* m_login_db;
+	DB* m_account_db;
+	unique_ptr<MapManager> m_map_manager;
 	concurrency::concurrent_queue<db_task>m_db_queue;
 	
 	std::thread db_thread;
 
-	bool CheckPlayerBullet(int c_id, const Vector3& position, const Vector3& forward);
 	void CallStateMachine(int enemy_id, int room_id,const Vector3& base_pos);
 	bool CheckMoveOK(int enemy_id,int room_id);
 

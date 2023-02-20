@@ -9,7 +9,6 @@ public:
         m_prev_size(0), m_socket(INVALID_SOCKET)
     {
         m_last_move_time=0 ;
-        //데미지랑 hp초기화 추가해야함
         m_type = OBJ_TYPE::OT_PLAYER;
         m_state = STATE::ST_FREE;
         m_room_id = -1;

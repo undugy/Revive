@@ -5,19 +5,21 @@
 #include<iostream>
 #include<cmath>
 #include<bitset>
+
 using namespace std;
 bool Astar::SearchAllPath(const vector<MapObj>& map_objects, const Vector3& start_pos, const Vector3& dst_pos , const BoxCollision& collision)
 {
 	Vec2 src= Vec2((ROW - 1) / 2, (COL - 1) / 2);
 	Vec2 dst=GetDestination(src,start_pos,dst_pos);
 	if (false == IsInRange(dst)) {
-		cout << "dst x"<<dst.second<< "dst z"<<dst.first << endl;
+#ifdef DEBUG
+		cout << "dst x" << dst.second << "dst z" << dst.first << endl;
 		cout << "범위 밖" << endl;
+#endif 	
 		return false;
 	};
 	if (true == IsBlocked(map_objects, dst, collision))
 	{
-		cout << "막힌곳" << endl;
 		return false;
 	}
 
@@ -68,7 +70,6 @@ bool Astar::SearchAllPath(const vector<MapObj>& map_objects, const Vector3& star
 		}
 
 	}
-	cout << "여기온다" << endl;
 	return false;
 }
 
@@ -158,14 +159,7 @@ bool Astar::IsBlocked(const vector<MapObj>& map_objects, const Vec2& dst, const 
 			}
 		}
 	}
-	if (check_set.all() == false) { cout << "응 밖이야" << endl; return true; }
-		//else if (OBJ_TYPE::OT_BASE == map_obj.GetType())
-		//{
-		//	if (abs(map_obj.GetPosX() - x) <= 10.0f && abs(map_obj.GetPosZ() - z) <= 10.0f)
-		//	{
-		//		return true;
-		//	}
-		//}
+
 	for (auto map_obj : map_objects)
 	{
 		if (OBJ_TYPE::OT_SPAWN_AREA == map_obj.GetType())continue;
@@ -194,11 +188,15 @@ void Astar::TracePath(Node& now, Vec2 src, Vec2 dst)
 {  
 	Node node = now;
 	std::vector<Vec2>result_vec;
-	std::cout << "들어옴" << std::endl;
+
 	while (testing_map[node.pos.first][node.pos.second].parant_pos != src)
 	{
 		result_vec.push_back(node.parant_pos);
-		//test_map[node.parant_pos.first][node.parant_pos.second] = '*';
+#ifdef DEBUG
+
+		test_map[node.parant_pos.first][node.parant_pos.second] = '*';
+#endif 
+
 		node = testing_map[node.parant_pos.first][node.parant_pos.second];
 	}
 
@@ -214,14 +212,17 @@ void Astar::TracePath(MapTile tile_map[36][16], Node& now, Vec2 src, Vec2 dst)
 
 	Node node = now;
 	std::vector<Vec2>result_vec;
-	std::cout << "들어옴" << std::endl;
+
 	while (testing_map[node.pos.first][node.pos.second].parant_pos != src)
 	{
 		result_vec.push_back(node.parant_pos);
-		//test_map[node.parant_pos.first][node.parant_pos.second] = '*';
+#ifdef DEBUG
+		test_map[node.parant_pos.first][node.parant_pos.second] = '*';
+#endif
 		node = testing_map[node.parant_pos.first][node.parant_pos.second];
 	}
-	/*for (int i = 0; i < 36; ++i)
+#ifdef DEBUG
+	for (int i = 0; i < 36; ++i)
 	{
 		for (int j = 0; j < 16; ++j)
 		{
@@ -250,8 +251,8 @@ void Astar::TracePath(MapTile tile_map[36][16], Node& now, Vec2 src, Vec2 dst)
 		}
 		
 		cout << endl;
-	}*/
-	
+	}
+#endif
 }
 
 Vec2 Astar::GetDestination(const Vec2&astar_src,const Vector3& src, const Vector3& dst)
@@ -261,7 +262,5 @@ Vec2 Astar::GetDestination(const Vec2&astar_src,const Vector3& src, const Vector
 	Vector3 dst_position{ (dst.x - m_zero_position.x) / REAL_DISTANCE,0.0f,(dst.z - m_zero_position.z) / REAL_DISTANCE };
 	destination.first = round(dst_position.z);
 	destination.second = round(dst_position.x);
-	//if (destination.first > 40)destination.first = 40;
-	//if (destination.second > 40)destination.second = 40;
 	return destination;
 }

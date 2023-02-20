@@ -60,10 +60,10 @@ enemy_state["attack"]=function (target_id)
 	now_z=API_get_z(skull_king.m_id);
 	if math.sqrt((math.abs(pl_x-now_x)^2)+(math.abs(pl_z-now_z)^2))<=skull_king.m_atk_range then
 		skull_king.m_curr_state="attack"
-		API_attack(skull_king.m_id,t_id);--������ֱ�
+		API_attack(skull_king.m_id,t_id);
 	else
 		skull_king.m_curr_state="move"
-		API_move(skull_king.m_id,t_id);--����� �ֱ�
+		API_move(skull_king.m_id,t_id);
 	end
 end
 
@@ -87,9 +87,7 @@ function initializEnemy(id, x, y, z, hp, damege,b_x,b_y,b_z,b_id)
 	skull_king.m_target_id=b_id;
 end
 
---API�� �÷��̾�, �����Ÿ� Ȯ���ϱ�
---���� ����� id ��ȯ
---target_id���� �ϴ� APIȣ��
+
 function event_agro_fallow( player )
    player_x = API_get_x(player);
    player_y = API_get_y(player);

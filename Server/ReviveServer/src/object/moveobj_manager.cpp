@@ -2,10 +2,7 @@
 #include "moveobj_manager.h"
 #include"lua/functions/lua_functions.h"
 MoveObjManager* MoveObjManager::m_pInst = nullptr;
-
 using namespace std;
-
-
 
 
 
@@ -60,7 +57,6 @@ void MoveObjManager::RegisterAPI(lua_State* L)
 	lua_register(L, "API_get_z", API_get_z);
 	lua_register(L, "API_move", API_move);
 	lua_register(L, "API_attack", API_attack);
-	
 	lua_register(L, "API_test_lua", API_test_lua);
 	
 }
@@ -123,14 +119,6 @@ void MoveObjManager::InitNPC()
 
 void MoveObjManager::DestroyObject()
 {
-	//for (int i = 0; i < MAX_USER; ++i)
-	//{
-	//	if (STATE::ST_INGAME == m_moveobj_arr[i]->GetState())
-	//	{
-	//		Disconnect(m_moveobj_arr[i]->GetID());
-	//		delete m_moveobj_arr[i];
-	//	}
-	//}
 	for (auto obj : m_moveobj_arr)
 	{
 		if (true == IsPlayer(obj->GetID()))

@@ -30,8 +30,6 @@ public:
         float max_hp, Vector3& pos, float damage,const char* name);
     void SetSpawnPoint(float x,float z);
     Vector3& GetLookVec()  { return m_look; }
-    //Vector3& GetPrevLookVec() { return m_prev_look; }
-    //void SetPrevLookVec(const Vector3& val) { m_prev_look=val; }
     Vector3& GetPrevPos() { return m_prev_pos; }
     Vector3& GetPrevTestPos() { return m_prev_test_pos; }
     BoxCollision& GetCollision() { return m_collision; }
@@ -44,7 +42,6 @@ public:
     lua_State* GetLua() { return m_L; }
     const int GetTargetId()const { return target_id; }
     void SetTargetId(const int val) { target_id = val; }
-    void SetMoveTime(int val); 
     std::chrono::system_clock::time_point& GetAttackTime() { return m_attack_time; }
     std::chrono::system_clock::time_point& GetCheckTime() { return m_check_time; }
     void DoMove(const Vector3& target_pos);
@@ -60,13 +57,11 @@ public:
     Vector3 m_prev_test_pos{ 0.0f,0.0f,0.0f };
     std::chrono::system_clock::time_point	m_move_time;
 private:
-    //std::vector<Vector3>m_load;
     std::chrono::system_clock::time_point	m_attack_time;
     std::chrono::system_clock::time_point	m_check_time;
     BoxCollision m_collision;
     BoxCollision m_prev_collision;
     Vector3 m_prev_pos{ 0.0f,0.0f,0.0f };
-    //Vector3 m_prev_look;
     lua_State* m_L;
     Vector3 m_look;
     std::atomic_int target_id;

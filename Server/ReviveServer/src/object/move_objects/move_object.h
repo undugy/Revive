@@ -29,8 +29,8 @@ public:
 	int GetRoomID()const { return m_room_id; }
 	char* GetName() { return m_name; }
 	COLOR_TYPE GetColorType()const { return m_color_type; }
-	bool GetIsActive()const { return m_is_active.load(std::memory_order_acquire); }
-	void SetIsActive(bool val) { m_is_active.store(val,std::memory_order_release); }
+	bool GetIsActive()const { return m_is_active.load(); }
+	void SetIsActive(bool val) { m_is_active.store(val); }
 	
 	void SetRotaion(const Vector4& val) { m_rotation = val; }
 	void SetDamge(float val) {  m_damage=val; }

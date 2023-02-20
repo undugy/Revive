@@ -7,6 +7,7 @@
 #include<vector>
 #include"map/map_info.h"
 #include"vec3.h"
+//#define DEBUG
 const int ROW = 41;
 const int COL = 41;
 const float REAL_DISTANCE = 45.0f;
@@ -15,9 +16,9 @@ const float REAL_DISTANCE = 45.0f;
 //현재 위치에서 제일가까운 타일 찾아주기
 //60x60이 국룰 시작을 30,30으로 배치->40x40으로 변경 20,20으로 배치
 
-//using CloseList = std::pair < std::bitset<ROW>, std::bitset<COL>>;
+
 class MapObj;
-//struct MapTile;
+struct MapTile;
 class BoxCollision;
 class Node {
 public:
@@ -57,15 +58,18 @@ class Astar
 {
 public:
 	Astar() {
-		//m_start_pos = Vec2((ROW-1) / 2, (COL-1) / 2);
-		//memset(test_map, 0, sizeof(testing_map));
-		//for (int i = 0; i < ROW; ++i)
-		//{
-		//	for (int j = 0; j < COL; ++j)
-		//	{
-		//		test_map[i][j] = '0';
-		//	}
-		//}
+#ifdef DEBUG
+				memset(test_map, 0, sizeof(testing_map));
+				for (int i = 0; i < ROW; ++i)
+				{
+					for (int j = 0; j < COL; ++j)
+					{
+						test_map[i][j] = '0';
+					}
+				}
+#endif // DEBUG
+
+		
 	};
 	~Astar() {};
 
@@ -87,7 +91,11 @@ private:
 	std::priority_queue<Node, std::vector<Node>, std::greater<Node>>open_pq;
 	Node testing_map[COL][ROW];
 	std::set<Vec2>close_set;
-	//char test_map[ROW][COL];
+#ifdef DEBUG
+	char test_map[ROW][COL];
+#endif 
+
+	
 	Vector3 m_zero_position;
 	
 	

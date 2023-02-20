@@ -26,10 +26,10 @@ public:
 
 	void JoinThread();
 public:
-	//this의 워커를 람다로 join 어떻게될지 모른다 나중에 오류나면 가상함수로 수정
+
 	void CreateWorker();
 
-	void Worker();//이거는 냅두고 내부함수를 override 
+	void Worker();
 	
 protected:
 	EXP_OVER	accept_ex;
