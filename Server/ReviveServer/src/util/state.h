@@ -1,0 +1,83 @@
+#pragma once
+
+
+enum class EVENT_TYPE { 
+	EVENT_NPC_SPAWN,
+	EVENT_NPC_TIMER_SPAWN,
+	EVENT_NPC_MOVE, 
+	EVENT_PLAYER_MOVE, 
+	EVENT_PLAYER_ATTACK,
+	EVENT_NPC_ATTACK,
+	EVENT_BASE_ATTACK,
+	EVENT_REFRESH_ROOM,
+	EVENT_TIME,
+	EVENT_REGEN,
+	EVENT_HEAL
+};
+
+enum class COMP_OP {
+	OP_RECV, 
+	OP_SEND, 
+	OP_ACCEPT, 
+	OP_NPC_SPAWN,
+	OP_NPC_TIMER_SPAWN,
+	OP_NPC_MOVE, 
+	OP_PLAYER_MOVE, 
+	OP_TRACKING_PLAYER, 
+	OP_BASE_ATTACK,
+	OP_COUNT_TIME,
+	OP_NPC_ATTACK,
+	OP_HEAL
+};
+
+enum class STATE 
+{ 
+	ST_FREE, 
+	ST_ACCEPT,
+	ST_LOGIN,
+	ST_INGAME 
+};
+enum class ROOM_STATE
+{
+	RT_FREE,
+	RT_INGAME,
+	RT_RESET
+};
+enum class ENEMY_STATE
+{
+	ST_FREE,
+	ST_INGAME,
+	ST_DEAD
+};
+enum class OBJ_TYPE
+{
+	OT_MAPOBJ,
+	OT_SPAWN_AREA,
+	OT_ACTIViTY_AREA,
+	OT_BASE,
+	OT_PLAYER,
+	OT_NPC_SKULL,
+	OT_NPC_SKULLKING,
+	OT_BULLET,
+	OT_HEAL_ZONE
+};
+enum class COLOR_TYPE
+{
+	CT_NONE,
+	CT_1,
+	CT_2,
+	CT_3,
+};
+enum class LOGINFAIL_TYPE {
+	OK,
+	DB_ERROR,
+	FULL,// 서버에 사용자가 너무 많을 때
+	AREADY_SIGHN_IN,//이미 해당아이디로 접속한 플레이어가 있을 때
+	WRONG_PASSWORD,//비밀번호가 틀렸을 때
+	NO_ID// 회원가입 안했을 때(db에 정보 없음)
+};
+
+enum class DB_TASK_TYPE {
+	SIGN_IN,
+	SIGN_UP
+};
