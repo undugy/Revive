@@ -3,7 +3,7 @@
 ------
 ## 목차
 1. 구성
-2. 소스코드 분석
+2. 소스코드 설명
 ----
 ## 01. 구성
 
@@ -19,7 +19,7 @@
 - 실질적인 로직은 PacketManager에서
 - PacketManager has RoomManager, MapManager, DB
 ```
-## 02. 소스코드 분석
+## 02. 소스코드 설명
 ------
 ### 1. IOCPServer
 
