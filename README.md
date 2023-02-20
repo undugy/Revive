@@ -28,13 +28,15 @@
 * IOCP 서버
 
 ***
-
+### 개발 일지
+* 주차별로 개발한 내용을 정리해 두었습니다.
+* 개발진행 과정이 궁금하시다면 [여기](https://github.com/undugy/Revive/wiki)서 확인하실 수 있습니다.
+***
 ### 인게임 이미지
 ![image](https://user-images.githubusercontent.com/34498116/183625957-f3d069c6-801e-4d65-beab-49cb1667e24e.png)
 ![image](https://user-images.githubusercontent.com/34498116/183626309-07417aec-d9a9-4cce-9a78-0d89e0887e7b.png)
 ![image](https://user-images.githubusercontent.com/34498116/183626383-3d23870b-b411-4941-81e1-10ad6291309b.png)
 ![image](https://user-images.githubusercontent.com/34498116/183626435-1798358a-f61c-49a9-85da-5d36bbf12d1a.png)
 
-
-
+***
 
