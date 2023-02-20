@@ -1,4 +1,4 @@
-# Revive 
+# Server
 
 ------
 ## 목차
