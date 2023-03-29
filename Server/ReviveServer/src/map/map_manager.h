@@ -19,12 +19,13 @@ public:
 		}
 		m_map_objects.reserve(100);
 	};
-	~MapManager()=default;
+	~MapManager(){}
 	void LoadMap(const std::string& path);
 	void BlockTileMap();
 	bool CheckCollision(BoxCollision& obj_collision);
 	bool CheckInRange(BoxCollision& collision);
 	bool CheckInRange(const Vector3& pos,OBJ_TYPE map_type);
+	Vector2 GetRandomSpawnPoint();
 	const std::vector<MapObj>& GetMapObjVec() const
 	{
 		return m_map_objects;
@@ -40,11 +41,8 @@ public:
 		}
 		return MapObj();
 	}
-	Vector3 PLAYER_SPAWN_POINT[3]{ 
-	{2350.0f,300.0f,3150.0f},
-	{2450.0f,300.0f,3150.0f},
-	{2400.0f,300.0f,3150.0f}
-	};
+	
+	// 2400 300 2850 베이스 그라운드 포즈
 private:
 	std::vector<MapObj>m_map_objects;
 	MapTile m_tile_map[36][16];

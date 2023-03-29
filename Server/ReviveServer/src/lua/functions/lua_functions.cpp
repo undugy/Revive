@@ -49,14 +49,13 @@ int API_attack(lua_State* L)
 	Enemy* en = MoveObjManager::GetInst()->GetEnemy(npc_id);
 	en->SetTargetId(target_id);
 	auto attack_t = chrono::system_clock::now();
-	timer_event t;
 	chrono::milliseconds mil = chrono::duration_cast<chrono::milliseconds>(en->GetAttackTime() - attack_t);
 	if (attack_t <=en->GetAttackTime())
-		t = PacketManager::SetTimerEvent(npc_id, target_id, en->GetRoomID(), EVENT_TYPE::EVENT_NPC_ATTACK, mil.count());
+		GS_GLOBAL::g_timer_queue.push(timer_event{ npc_id, target_id, en->GetRoomID(), 
+		EVENT_TYPE::EVENT_NPC_ATTACK, mil.count() });
 	else
-		t = PacketManager::SetTimerEvent(npc_id, target_id, en->GetRoomID(), EVENT_TYPE::EVENT_NPC_ATTACK, 1000);
-
-		PacketManager::g_timer_queue.push(move(t));
+		GS_GLOBAL::g_timer_queue.push(timer_event{ npc_id, target_id, en->GetRoomID(),
+		EVENT_TYPE::EVENT_NPC_ATTACK, 1000 });
 
 	return 0;
 }
@@ -68,7 +67,7 @@ int API_move(lua_State* L)
 	lua_pop(L, 3);
 	Enemy* en = MoveObjManager::GetInst()->GetEnemy(npc_id);
 	en->SetTargetId(target_id);
-	timer_event t=PacketManager::SetTimerEvent(en->GetID(), en->GetID(), en->GetRoomID(),EVENT_TYPE::EVENT_NPC_MOVE,50);
-	PacketManager::g_timer_queue.push(move(t));
+	GS_GLOBAL::g_timer_queue.push(timer_event{ en->GetID(), en->GetID(), en->GetRoomID(),
+		EVENT_TYPE::EVENT_NPC_MOVE,50 });
 	return 0;
 }

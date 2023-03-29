@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "iocp_server.h"
+#include"define.h"
 using namespace std;
 IOCPServer::IOCPServer()
 {
@@ -45,8 +46,8 @@ bool IOCPServer::BindListen(const int port_num)
 		return false;
 	}
 
-	m_hiocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
-	CreateIoCompletionPort(reinterpret_cast<HANDLE>(m_s_socket), m_hiocp, 0, 0);
+	IOCP_GLOBAL::g_hiocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
+	CreateIoCompletionPort(reinterpret_cast<HANDLE>(m_s_socket), IOCP_GLOBAL::g_hiocp, 0, 0);
 
 	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
 	char	accept_buf[sizeof(SOCKADDR_IN) * 2 + 32 + 100];
@@ -77,7 +78,7 @@ void IOCPServer::Worker()
 		DWORD num_byte;
 		LONG64 iocp_key;
 		WSAOVERLAPPED* p_over;
-		BOOL ret = GetQueuedCompletionStatus(m_hiocp, &num_byte, (PULONG_PTR)&iocp_key, &p_over, INFINITE);
+		BOOL ret = GetQueuedCompletionStatus(IOCP_GLOBAL::g_hiocp, &num_byte, (PULONG_PTR)&iocp_key, &p_over, INFINITE);
 		int client_id = static_cast<int>(iocp_key);
 		EXP_OVER* exp_over = reinterpret_cast<EXP_OVER*>(p_over);
 		if (FALSE == ret) {

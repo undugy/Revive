@@ -59,7 +59,7 @@ void MapManager::LoadMap(const std::string& path)
 		}
 		case HashCode("Position"): {
 			ss >> temp_pos.x >> temp_pos.y >> temp_pos.z;
-			positions.emplace_back(std::move(temp_pos));
+			positions.emplace_back(temp_pos);
 			break;
 		}
 		case HashCode("Rotation"): {
@@ -260,4 +260,27 @@ bool MapManager::CheckInRange(const Vector3& pos,OBJ_TYPE map_type)
 		
 	}
 	return false;
+}
+
+Vector2 MapManager::GetRandomSpawnPoint()
+{
+	vector<MapObj>spawn_area;
+	random_device rd;
+	mt19937 gen(rd());
+	uniform_int_distribution<int> random_point(0, 1);
+	spawn_area.reserve(10);
+
+	for (auto a : m_map_manager->GetMapObjVec())
+	{
+		if (OBJ_TYPE::OT_SPAWN_AREA != a.GetType())continue;
+		spawn_area.push_back(a);
+	}
+	int spawn_idx = random_point(gen);
+	uniform_int_distribution<int> random_pos_x(static_cast<int>(spawn_area[spawn_idx].GetPosX() - spawn_area[spawn_idx].GetExtent().x),
+		static_cast<int>(spawn_area[spawn_idx].GetPosX() + spawn_area[spawn_idx].GetExtent().x));
+
+	uniform_int_distribution<int> random_pos_z(static_cast<int>(spawn_area[spawn_idx].GetPosZ() - spawn_area[spawn_idx].GetExtent().z),
+		static_cast<int>(spawn_area[spawn_idx].GetPosZ() + spawn_area[spawn_idx].GetExtent().z));
+	
+	return Vector2(spawn_area[spawn_idx].GetPosX(), spawn_area[spawn_idx].GetPosZ());
 }

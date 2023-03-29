@@ -2,10 +2,13 @@
 #include"define.h"
 #include<concurrent_queue.h>
 #include<thread>
+#include<memory>
+#include"map/map_manager.h"
+#include"room/room_manager.h"
+#include<functional>
 class MoveObjManager;
 class DB;
-class RoomManager;
-class MapManager;
+
 
 class PacketManager
 {
@@ -20,11 +23,11 @@ public:
 	
 
 
+	void CountTime(int room_id);
 
 	void SpawnEnemy(int room_id);
 	void SpawnEnemyByTime(int enemy_id,int room_id);
 	void DoEnemyMove(int room_id, int enemy_id);
-	void CountTime(int room_id);
 	void DoEnemyAttack(int enemy_id, int target_id, int room_id);
 	void BaseAttackByTime(int room_id,int enemy_id);
 	void ActivateHealEvent(int room_id, int player_id);
@@ -35,18 +38,18 @@ public:
 	void SendLoginFailPacket(SOCKET& c_socket, int reason);
 	void SendSignInOK(int c_id);
 	void SendSignUpOK(int c_id);
-	void SendMatchingOK(int c_id);
+	sc_packet_matching SendMatchingOK();
 	void SendPutObjPacket(int c_id, int obj_id, OBJ_TYPE obj_type);
-	void SendObjInfo(int c_id, int obj_id);
-	void SendTime(int c_id,float round_time);
+	sc_packet_obj_info SendObjInfo(MoveObj* obj);
+	sc_packet_time SendTime(float round_time);
 	void SendTestPacket(int c_id, int obj_id, float x, float y, float z);
 	void SendAttackPacket(int c_id, int attacker,const Vector3&forward_vec);
-	void SendBaseStatus(int c_id ,int room_id);
+	sc_packet_base_status SendBaseStatus(int room_id, float base_hp);
 	void SendStatusChange(int c_id, int obj_id, float hp);
-	void SendGameWin(int c_id);
+	sc_packet_win SendGameWin();
 	void SendGameDefeat(int c_id);
 	void SendDead(int c_id,int obj_id);
-	void SendWaveInfo(int c_id,int curr_round, int king_num, int sordier_num);
+	sc_packet_wave_info SendWaveInfo(int curr_round, int king_num, int sordier_num);
 	
 
 
@@ -69,29 +72,26 @@ public:
 	static timer_event SetTimerEvent(int obj_id, int target_id, EVENT_TYPE ev, int seconds);
 	static timer_event SetTimerEvent(int obj_id, int target_id,int room_id, EVENT_TYPE ev, int seconds);
 	static concurrency::concurrent_priority_queue <timer_event> g_timer_queue;
+	
+	template<typename T>
+	void RegisterRecvFunction(char key, void(T::* recv_func)(int,unsigned char*))
+	{
+		m_recv_func_map[key] = recv_func;
+	}
 private:
 	
 	
-	unique_ptr<RoomManager> m_room_manager;
-	DB* m_login_db;
-	DB* m_account_db;
-	unique_ptr<MapManager> m_map_manager;
-	concurrency::concurrent_queue<db_task>m_db_queue;
+	
+	std::unordered_map<char, std::function<void(int, unsigned char*)> >m_recv_func_map;
+	
+	
 	
 	std::thread db_thread;
 
 	void CallStateMachine(int enemy_id, int room_id,const Vector3& base_pos);
 	bool CheckMoveOK(int enemy_id,int room_id);
 
-	//나중에 개발
-	void ProcessSignIn (int c_id ,unsigned char *p);
-	void ProcessSignUp(int c_id, unsigned char* p);
-	void ProcessAttack(int c_id ,unsigned char* p);
-	void ProcessMove  (int c_id ,unsigned char* p);
-	void ProcessMatching(int c_id, unsigned char* p);
-	void ProcessHit(int c_id, unsigned char* p);
-	void ProcessGameStart(int c_id, unsigned char* p);
-	void ProcessDamageCheat(int c_id, unsigned char* p);
+
 	void StartGame(int room_id);
 };
 

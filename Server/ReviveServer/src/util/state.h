@@ -18,7 +18,8 @@ enum class EVENT_TYPE {
 enum class COMP_OP {
 	OP_RECV, 
 	OP_SEND, 
-	OP_ACCEPT, 
+	OP_ACCEPT,
+
 	OP_NPC_SPAWN,
 	OP_NPC_TIMER_SPAWN,
 	OP_NPC_MOVE, 
@@ -27,7 +28,11 @@ enum class COMP_OP {
 	OP_BASE_ATTACK,
 	OP_COUNT_TIME,
 	OP_NPC_ATTACK,
-	OP_HEAL
+	OP_HEAL,
+	OP_FRESH_ROOM,
+
+	OP_LOGIN,
+	OP_SIGNUP
 };
 
 enum class STATE 
@@ -40,6 +45,7 @@ enum class STATE
 enum class ROOM_STATE
 {
 	RT_FREE,
+	RT_MATCHING,
 	RT_INGAME,
 	RT_RESET
 };
@@ -74,7 +80,11 @@ enum class LOGINFAIL_TYPE {
 	FULL,// 서버에 사용자가 너무 많을 때
 	AREADY_SIGHN_IN,//이미 해당아이디로 접속한 플레이어가 있을 때
 	WRONG_PASSWORD,//비밀번호가 틀렸을 때
-	NO_ID// 회원가입 안했을 때(db에 정보 없음)
+	NO_ID,// 회원가입 안했을 때(db에 정보 없음)
+
+	SIGN_UP_OK,
+	SIGN_UP_FAIL
+
 };
 
 enum class DB_TASK_TYPE {

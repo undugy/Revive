@@ -21,7 +21,7 @@ public:
    virtual ~Player()=default;
    std::mutex state_lock;
    int		m_prev_size;
-   std::atomic_bool is_matching = false;
+   //std::atomic_bool is_matching = false;
     
 private:
     
@@ -35,7 +35,7 @@ private:
 public:
 
     
-
+    void SetMatchingState(int room_id);
     STATE GetState()const { return m_state; }
     void SetState(STATE val) { m_state = val; }
     void DoRecv();

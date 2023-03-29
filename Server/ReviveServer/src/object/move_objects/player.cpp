@@ -1,6 +1,15 @@
 #include"pch.h"
 #include "player.h"
 #include"iocp/iocp_server.h"
+void Player::SetMatchingState(int room_id)
+{
+	
+	state_lock.lock();
+	SetState(STATE::ST_INGAME);
+	state_lock.unlock();
+	SetRoomID(room_id);
+	SetIsActive(true);
+}
 void Player::DoRecv()
 {
 	DWORD recv_flag = 0;
@@ -42,7 +51,7 @@ void Player::ResetPlayer()
 {
 	
 	m_is_active = false;
-	is_matching = false;
+
 	ZeroMemory(m_password, MAX_PASSWORD_SIZE + 1);
 	m_hp = PLAYER_HP;//추후 밸런스 조정
 	m_maxhp = m_hp;
@@ -60,7 +69,7 @@ void Player::Reset()
 	m_maxhp = m_hp;
 	m_damage = PLAYER_DAMAGE;
 	m_is_ready = false;
-	is_matching = false;
+
 	ZeroMemory(m_name, MAX_NAME_SIZE + 1);
 	ZeroMemory(m_password, MAX_PASSWORD_SIZE + 1);
 	state_lock.lock();

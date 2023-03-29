@@ -134,4 +134,23 @@ void MoveObjManager::DestroyObject()
 	}
 }
 
+bool MoveObjManager::CheckLoginUser(char * user_id)
+{
+	for (int i = 0; i < MAX_USER; ++i)
+	{
+		Player* other_pl = reinterpret_cast<Player*>(m_moveobj_arr[i]);
+		other_pl->state_lock.lock();
+		if (other_pl->GetState() == STATE::ST_FREE)
+		{
+			other_pl->state_lock.unlock();
+			continue;
+		}
+		other_pl->state_lock.unlock();
+		if (strcmp(other_pl->GetName(), user_id) == 0)
+			return false;
+		
+	}
+	return true;
+}
+
 

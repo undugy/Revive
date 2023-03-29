@@ -1,26 +1,48 @@
 #include "pch.h"
 #include "enemy.h"
+
 using namespace std;
 
 //기지 아이디= -1
-void Enemy::InitEnemy(OBJ_TYPE type, int room_id, 
-	float max_hp, Vector3& pos, float damage, const char*name)
+bool Enemy::Init(OBJ_TYPE type)
 {
-	m_type = type;
-	m_room_id = room_id;
-	m_hp = max_hp;
-	m_maxhp = max_hp;
-	m_L = luaL_newstate();
-	SetPos(pos);
-	m_damage = damage;
-	strcpy_s(m_name, name);
+	
+	
+	switch (type)
+	{
+	
+	case OBJ_TYPE::OT_NPC_SKULL: 
+	{
+		m_type = type;
+		m_hp = SKULL_HP;
+		m_maxhp = SKULL_HP;
+		m_damage = SORDIER_DAMAGE;
+		m_collision = BoxCollision{ m_pos, SOLDIER_LOCAL_POS, SOLDIER_EXTENT, SOLDIER_SCALE };
+		strcpy_s(m_name, "Skull Soldier");
+		m_lua.Init("src/lua/sclipt/enemy_sordier.lua", this);
+	}
+		break;
+	case OBJ_TYPE::OT_NPC_SKULLKING:
+	{
+		m_type = type;
+		m_hp = SKULLKING_HP;
+		m_maxhp = SKULLKING_HP;
+		m_damage = SORDIER_DAMAGE;
+		m_collision = BoxCollision{ m_pos, KING_LOCAL_POS, KING_EXTENT, KING_SCALE };
+		strcpy_s(m_name, "Skull King");
+		m_lua.Init("src/lua/sclipt/enemy_king.lua", this);
+	}
+		break;
+	default:
+		cout << "Enemy Type Error !" << endl;
+		break;
+	}
 	
 }
 
 void Enemy::SetSpawnPoint(float x, float z)
 {
 	Vector3 pos(x, 300.0f, z);
-	SetOriginPos(pos);
 	SetPos(pos);
 	m_prev_pos = pos;
 }
@@ -34,7 +56,6 @@ void Enemy::Reset()
 	m_room_id = -1;
 	m_attack_time = std::chrono::system_clock::now();
 	m_check_time = std::chrono::system_clock::now();
-	m_move_time = std::chrono::system_clock::now();
 	in_use=false;
 	in_game = false;
 	m_is_active = false;

@@ -34,7 +34,7 @@ public:
 protected:
 	EXP_OVER	accept_ex;
 	SOCKET m_s_socket;
-	HANDLE m_hiocp;
+
 	int m_worker_num;
 	std::vector <std::thread> m_worker_threads;
 	
