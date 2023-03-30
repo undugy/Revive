@@ -1,7 +1,8 @@
-#include"pch.h"
+
 #include"lua_functions.h"
 #include"object/moveobj_manager.h"
-#include"game_server/packet_manager.h"
+#include"define.h"
+
 using namespace std;
 int API_get_x(lua_State* L)
 {
@@ -50,9 +51,10 @@ int API_attack(lua_State* L)
 	en->SetTargetId(target_id);
 	auto attack_t = chrono::system_clock::now();
 	chrono::milliseconds mil = chrono::duration_cast<chrono::milliseconds>(en->GetAttackTime() - attack_t);
+	
 	if (attack_t <=en->GetAttackTime())
-		GS_GLOBAL::g_timer_queue.push(timer_event{ npc_id, target_id, en->GetRoomID(), 
-		EVENT_TYPE::EVENT_NPC_ATTACK, mil.count() });
+		GS_GLOBAL::g_timer_queue.push(timer_event{ npc_id, target_id, en->GetRoomID(),
+		EVENT_TYPE::EVENT_NPC_ATTACK, static_cast<int>(mil.count()) });
 	else
 		GS_GLOBAL::g_timer_queue.push(timer_event{ npc_id, target_id, en->GetRoomID(),
 		EVENT_TYPE::EVENT_NPC_ATTACK, 1000 });

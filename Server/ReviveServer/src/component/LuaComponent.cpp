@@ -1,6 +1,6 @@
 #include"LuaComponent.h"
 #include"object/move_objects/enemy.h"
-#include"lua/functions/lua_functions.h"
+#include"define.h"
 #include<iostream>
 using namespace std;
 void LuaComponent::Init(const char* script_name, Enemy* enemy)
@@ -44,4 +44,14 @@ void LuaComponent::LuaErrorDisplay(int err_num)
 {
 	cout << "Error : " << lua_tostring(m_L, -1) << endl;
 	lua_pop(m_L, 1);
+}
+
+void LuaComponent::CallStateMachine(Enemy* enemy)
+{
+	lua_getglobal(m_L, "state_machine");
+	lua_pushnumber(m_L, enemy->GetTargetId());
+	int err = lua_pcall(m_L, 1, 0, 0);
+	if (err)
+		LuaErrorDisplay(err);
+
 }

@@ -16,7 +16,7 @@ void RoomManager::DestroyRoom()
 bool RoomManager::IsRoomInGame(int room_id)
 {
 	Room* r = m_rooms[room_id];
-	std::lock_guard<std::mutex>(r->m_state_lock);
+	std::lock_guard<std::mutex>guard(r->m_state_lock);
 	if (r->GetState() == ROOM_STATE::RT_INGAME)
 		return true;
 	return false;
@@ -48,7 +48,7 @@ MATCHING_RESULT RoomManager::SearchMatchingRoom(int matchUserSize,Player*player)
 	{
 		if (room->GetMaxUser() != matchUserSize)
 			continue;
-		std::lock_guard<std::mutex>(room->m_state_lock);
+		std::lock_guard<std::mutex>guard(room->m_state_lock);
 		if (room->GetState() == ROOM_STATE::RT_MATCHING)
 		{
 			room->SetState(ROOM_STATE::RT_INGAME);

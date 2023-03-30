@@ -1,17 +1,26 @@
-#include "pch.h"
 #include "ingame_server.h"
+#include "pch.h"
 #include"packet_manager.h"
-#include"database/db.h"
 #include"room/room.h"
 #include"object/moveobj_manager.h"
+#include"database/db.h"
+#include"database/DBManager.h"
+#include"room/room_manager.h"
 #include"map/map_manager.h"
-#include"define.h"
+#include"event/EventHelper.h"
+
 using namespace std;
+
+
 InGameServer::InGameServer()
 {
-	m_PacketManager = std::make_unique<PacketManager>();
-	m_PacketManager->Init();
-	m_PacketManager->RegisterRecvFunction(SC_PACKET_MOVE, ProcessSignIn);
+	MoveObjManager::GetInst();
+	m_PacketManager = make_unique<PacketManager>();
+	m_room_manager = make_unique<RoomManager>(); 
+	m_map_manager  = make_unique<MapManager>();
+	m_db_manager   = make_unique<DBManager>();
+	m_event_helper = make_unique<EventHelper>();
+
 }
 
 InGameServer::~InGameServer()
@@ -27,6 +36,9 @@ bool InGameServer::OnAccept(EXP_OVER* exp_over)
 
 bool InGameServer::OnRecv(int c_id, EXP_OVER* exp_over, DWORD num_bytes)
 {
+	if (num_bytes == 0){
+		Disconnect(c_id);
+	}
 	m_PacketManager->ProcessRecv(c_id, exp_over, num_bytes);
 	return true;
 }
@@ -45,37 +57,36 @@ void InGameServer::OnEvent(int c_id,EXP_OVER* exp_over)
 	switch (exp_over->_comp_op)
 	{
 	case COMP_OP::OP_NPC_SPAWN: {
-		m_PacketManager->SpawnEnemy(exp_over->room_id);
+		SpawnEnemy(exp_over->room_id);
 		
 		break;
 	}
 	case COMP_OP::OP_NPC_MOVE: {
-		m_PacketManager->DoEnemyMove(exp_over->room_id, c_id);
-
+		DoEnemyMove(exp_over->room_id, c_id);
 		break;
 	}
 	case COMP_OP::OP_COUNT_TIME: {
-		m_PacketManager->CountTime(exp_over->room_id);
+		CountTime(exp_over);
 
 		break;
 	}
 	case COMP_OP::OP_NPC_ATTACK: {
-		m_PacketManager->DoEnemyAttack(c_id,exp_over->target_id,exp_over->room_id);
+		DoEnemyAttack(c_id,exp_over->target_id,exp_over->room_id);
 
 		break;
 	}
 	case COMP_OP::OP_NPC_TIMER_SPAWN: {
-		m_PacketManager->SpawnEnemyByTime(c_id, exp_over->room_id);
+		SpawnEnemyByTime(c_id, exp_over->room_id);
 	
 		break;
 	}
 	case COMP_OP::OP_BASE_ATTACK: {
-		m_PacketManager->BaseAttackByTime(exp_over->room_id, c_id);
+		BaseAttackByTime(exp_over->room_id, c_id);
 
 		break;
 	}
 	case COMP_OP::OP_HEAL: {
-		m_PacketManager->ActivateHealEvent(exp_over->room_id, c_id);
+		ActivateHealEvent(exp_over->room_id, c_id);
 		
 		break;
 	}
@@ -84,7 +95,7 @@ void InGameServer::OnEvent(int c_id,EXP_OVER* exp_over)
 		Player*pl=MoveObjManager::GetInst()->GetPlayer(result->obj_id);
 		if (result->result == LOGINFAIL_TYPE::OK)
 		{
-			lock_guard<std::mutex>(pl->state_lock);
+			lock_guard<std::mutex>guard(pl->state_lock);
 			if (pl->GetState() == STATE::ST_ACCEPT)
 				pl->SetState(STATE::ST_LOGIN);
 		}
@@ -117,19 +128,42 @@ void InGameServer::OnEvent(int c_id,EXP_OVER* exp_over)
 
 void InGameServer::Disconnect(int c_id)
 {
-	m_PacketManager->Disconnect(c_id);
+	MoveObjManager::GetInst()->Disconnect(c_id);
+	Player* cl = MoveObjManager::GetInst()->GetPlayer(c_id);
+
+	lock_guard<mutex>state_guard(cl->state_lock);
+	if (cl->GetRoomID() == -1)
+		cl->SetState(STATE::ST_FREE);
+
 }
 
-void InGameServer::DoTimer(HANDLE hiocp)
+bool InGameServer::StartServer()
 {
-	m_PacketManager->ProcessTimer(hiocp);
+	RegisterProcessFunc();
+	MoveObjManager::GetInst()->InitPlayer();
+	MoveObjManager::GetInst()->InitNPC();
+	m_room_manager->InitRoom();
+	m_map_manager->LoadMap("src/map/map.txt");
+	CreateWorker();
+	return false;
+}
+
+void InGameServer::TimerThread()
+{
+	m_event_helper->ProcessTimer();
+}
+
+void InGameServer::DBThread()
+{
+	m_db_manager->DBThread();
 }
 
 
 
-void InGameServer::CreateTimer()
+void InGameServer::CreateOtherThered()
 {
-	m_worker_threads.emplace_back(&InGameServer::DoTimer,this, IOCP_GLOBAL::g_hiocp);
+	m_worker_threads.emplace_back(&InGameServer::TimerThread, this);
+	m_worker_threads.emplace_back(&InGameServer::DBThread, this);
 	
 }
 
@@ -137,22 +171,30 @@ void InGameServer::CreateTimer()
 
 void InGameServer::Run()
 {
-	
-
 	StartServer();
-	CreateTimer();
-	m_PacketManager->CreateDBThread();
+	CreateOtherThered();
 	JoinThread();
-	m_PacketManager->JoinDBThread();
 }
 
 void InGameServer::End()
 {
-	m_PacketManager->End();
-	
+	MoveObjManager::GetInst()->DestroyObject();
+	MoveObjManager::DestroyInst();
 	CloseHandle(IOCP_GLOBAL::g_hiocp);
 	closesocket(m_s_socket);
 
+}
+
+void InGameServer::RegisterProcessFunc()
+{
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_SIGN_IN, [this](int c_id, unsigned char* p) {ProcessSignIn(c_id, p); });
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_SIGN_UP, [this](int c_id, unsigned char* p) {ProcessSignUp(c_id, p); });
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_MOVE, [this](int c_id, unsigned char* p) {ProcessMove(c_id, p); });
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_ATTACK, [this](int c_id, unsigned char* p) {ProcessAttack(c_id, p); } );
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_MATCHING, [this](int c_id, unsigned char* p) {ProcessMatching(c_id, p); });
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_HIT, [this](int c_id, unsigned char* p) {ProcessHit(c_id, p); });
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_GAME_START, [this](int c_id, unsigned char* p) {ProcessGameStart(c_id, p); });
+	m_PacketManager->RegisterRecvFunction(CS_PACKET_DAMAGE_CHEAT, [this](int c_id, unsigned char* p) {ProcessDamageCheat(c_id, p); });
 }
 
 void InGameServer::ProcessSignIn(int c_id, unsigned char* p)
@@ -169,7 +211,7 @@ void InGameServer::ProcessSignIn(int c_id, unsigned char* p)
 	strcpy_s(dt.user_id, packet->name);
 	strcpy_s(dt.user_password, packet->password);
 
-	m_db_manager->m_db_queue.push(move(dt));
+	m_db_manager->PushTask(move(dt));
 }
 
 void InGameServer::ProcessSignUp(int c_id, unsigned char* p)
@@ -180,7 +222,7 @@ void InGameServer::ProcessSignUp(int c_id, unsigned char* p)
 	dt.obj_id = c_id;
 	strcpy_s(dt.user_id, packet->name);
 	strcpy_s(dt.user_password, packet->password);
-	m_db_queue.push(move(dt));
+	m_db_manager->PushTask(move(dt));
 }
 
 void InGameServer::ProcessAttack(int c_id, unsigned char* p)
@@ -190,53 +232,27 @@ void InGameServer::ProcessAttack(int c_id, unsigned char* p)
 	if (player->GetRoomID() == -1)return;
 
 	Room* room = m_room_manager->GetRoom(player->GetRoomID());
-	Vector3 forward_vec{ packet->f_x,packet->f_y,packet->f_z };
 
-	for (int pl : room->GetObjList())
-	{
-		if (false == MoveObjManager::GetInst()->IsPlayer(pl))continue;
-		if (pl == c_id)continue;
-		SendAttackPacket(pl, c_id, forward_vec);
-	}
+	auto& atk_packet = m_PacketManager->SendAttackPacket(c_id, Vector3{ packet->f_x,packet->f_y,packet->f_z });
+	room->RouteToOther(atk_packet,c_id);
 }
 
 void InGameServer::ProcessMove(int c_id, unsigned char* p)
 {
 	cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p);
 	Player* cl = MoveObjManager::GetInst()->GetPlayer(c_id);
-	Vector3 pos{ packet->x,packet->y,packet->z };
-	cl->state_lock.lock();
-	if (cl->GetState() != STATE::ST_INGAME)
-	{
-		cl->state_lock.unlock();
-		return;
-	}
-	else cl->state_lock.unlock();
 	Room* room = m_room_manager->GetRoom(cl->GetRoomID());
 
+	Vector3 pos{ packet->x,packet->y,packet->z };
 	cl->m_last_move_time = packet->move_time;
-
 	cl->SetPos(pos);
+
 	if (isnan(cl->GetPosX()) || isnan(cl->GetPosY()) || isnan(cl->GetPosZ()))return;
 	//여기서 힐존 검사하기
-	cl->m_hp_lock.lock();
-	if (cl->GetHP() < cl->GetMaxHP()) {
-		cl->m_hp_lock.unlock();
-		if (true == m_map_manager->CheckInRange(cl->GetPos(), OBJ_TYPE::OT_HEAL_ZONE) && false == cl->GetIsHeal())
-		{
-			cout << "힐존검사는 오케";
-			cl->SetIsHeal(true);
-			g_timer_queue.push(SetTimerEvent(c_id, c_id, cl->GetRoomID(), EVENT_TYPE::EVENT_HEAL, HEAL_TIME));
-		}
-	}
-	else
-		cl->m_hp_lock.unlock();
-	for (auto other_pl : room->GetObjList())
-	{
-		if (false == MoveObjManager::GetInst()->IsPlayer(other_pl))
-			continue;
-		SendMovePacket(other_pl, c_id);
-	}
+	TryHealEvent(cl);
+	auto& move_packet = m_PacketManager->SendMovePacket(cl);
+	room->RouteToAll(move_packet);
+		
 }
 
 void InGameServer::ProcessMatching(int c_id, unsigned char* p)
@@ -293,38 +309,31 @@ void InGameServer::ProcessMatching(int c_id, unsigned char* p)
 void InGameServer::ProcessHit(int c_id, unsigned char* p)
 {
 	cs_packet_hit* packet = reinterpret_cast<cs_packet_hit*>(p);
+	
 	MoveObj* victim = MoveObjManager::GetInst()->GetMoveObj(packet->victim_id);
 	MoveObj* attacker = MoveObjManager::GetInst()->GetMoveObj(packet->attacker_id);
-	if (victim->GetRoomID() == -1 || attacker->GetRoomID() == -1)return;
 	Room* room = m_room_manager->GetRoom(attacker->GetRoomID());
-	float hp;
-	victim->m_hp_lock.lock();
-	victim->SetHP(victim->GetHP() - attacker->GetDamge());
-	hp = victim->GetHP();
-	victim->m_hp_lock.unlock();
-	for (int obj_id : room->GetObjList())
-	{
-		if (false == MoveObjManager::GetInst()->IsPlayer(obj_id))continue;
-		//if (victim->GetID() == obj_id||attacker->GetID()==obj_id)continue;
-		SendStatusChange(obj_id, victim->GetID(), victim->GetHP());
-	}
+	
+	
+	if (victim->GetRoomID() == -1 || attacker->GetRoomID() == -1)return;
+	
+	float hp = victim->Hit(attacker->GetDamge());
+	auto& status_packet = m_PacketManager->SendStatusChange(packet->victim_id, hp);
 
+	room->RouteToAll(status_packet);
+
+	
 	if (hp <= 0.0f)
 	{
 		victim->SetIsActive(false);
-		for (int obj_id : room->GetObjList())
-		{
-			if (false == MoveObjManager::GetInst()->IsPlayer(obj_id))continue;
-			SendDead(obj_id, victim->GetID());
-		}
+		auto& dead_packet = m_PacketManager->SendDead(packet->victim_id);
+		room->RouteToAll(dead_packet);
+
 		if (victim->GetType() == OBJ_TYPE::OT_PLAYER)
 		{
-			for (int obj_id : room->GetObjList())
-			{
-				if (false == MoveObjManager::GetInst()->IsPlayer(obj_id))continue;
-				SendGameDefeat(obj_id);
-			}
-			EndGame(victim->GetRoomID());
+			auto& defeat_packet = m_PacketManager->SendGameDefeat();
+			room->RouteToAll(defeat_packet);
+			room->GameEnd();
 		}
 	}
 }
@@ -348,6 +357,8 @@ void InGameServer::ProcessDamageCheat(int c_id, unsigned char* p)
 	else
 		player->SetDamge(PLAYER_DAMAGE);
 }
+
+
 
 void InGameServer::StartGame(int room_id)
 {
@@ -456,6 +467,97 @@ void InGameServer::DoEnemyMove(int room_id, int enemy_id)
 	
 	Vector3 target_vec{ target_pos - enemy->GetPos() };
 	enemy->DoMove(target_vec);
+	if (false == CheckMoveOK(enemy_id, room_id))
+	{
+		enemy->SetToPrevPos();
+		Vector3 best_way;
+		float best_dist = FLT_MAX;
+		for (const Vector3& way : enemy->MakeWays(target_vec))
+		{
+			enemy->DoMove(way);
+			if (CheckMoveOK(enemy_id, room_id) == true)
+			{
+				float now_dist = enemy->GetPos().Dist2d(target_pos) -
+					((enemy->GetPos().Dist2d(enemy->GetPrevTestPos()) + CONST_VALUE::HEURISTICS));
+				if (best_dist > now_dist)
+				{
+					best_dist = now_dist;
+					best_way = way;
+				}
+			}
+			enemy->SetToPrevPos();
+		}
+		if (best_dist != FLT_MAX)
+		{
+			enemy->SetPrevTestPos(enemy->GetPrevPos());
+			enemy->DoMove(best_way);
+		}
+
+	}
+	auto& packet = m_PacketManager->SendMovePacket(enemy);
+	room->RouteToAll(packet);
+	CallStateMachine(enemy_id, room_id);
+}
+
+void InGameServer::DoEnemyAttack(int enemy_id, int target_id, int room_id)
+{
+	Room* room = m_room_manager->GetRoom(room_id);
+	Enemy* enemy = MoveObjManager::GetInst()->GetEnemy(enemy_id);
+
+	if (false == enemy->GetIsActive())return;
+
+	if (target_id == BASE_ID)
+	{
+		Vector3 base_pos = m_map_manager->GetMapObjectByType(OBJ_TYPE::OT_BASE).GetPos();
+		int base_attack_t = CONST_VALUE::ATTACK_INTERVAL;
+		if (enemy->GetType() == OBJ_TYPE::OT_NPC_SKULL) {
+			float dist = enemy->GetPos().Dist(base_pos);
+			base_attack_t =static_cast<int>( (dist / 1500.0f) * CONST_VALUE::ATTACK_INTERVAL);
+		}
+		GS_GLOBAL::g_timer_queue.push(timer_event(enemy_id, enemy_id, room_id, EVENT_TYPE::EVENT_BASE_ATTACK,
+			base_attack_t));
+	}
+	auto& packet = m_PacketManager->SendNPCAttackPacket(enemy_id, target_id);
+	room->RouteToAll(packet);
+
+	enemy->SetAttackTime();
+
+	CallStateMachine(enemy_id, room_id);
+}
+
+void InGameServer::BaseAttackByTime(int room_id, int enemy_id)
+{
+	Enemy* enemy = MoveObjManager::GetInst()->GetEnemy(enemy_id);
+	Room* room = m_room_manager->GetRoom(room_id);
+	room->m_base_hp_lock.lock();
+	
+	float base_hp = room->GetBaseHp() - enemy->GetDamge();
+	room->SetBaseHp(base_hp);
+	room->m_base_hp_lock.unlock();
+	
+	auto& base_packet = m_PacketManager->SendBaseStatus(room_id, base_hp);
+	room->RouteToAll(base_packet);
+	
+	if (base_hp <= 0.0f)
+	{
+		auto& defeat_packet = m_PacketManager->SendGameDefeat();
+		room->RouteToAll(defeat_packet);
+		room->GameEnd();
+	}
+}
+
+void InGameServer::ActivateHealEvent(int room_id, int player_id)
+{
+	Player* player = MoveObjManager::GetInst()->GetPlayer(player_id);
+	Room* room = m_room_manager->GetRoom(room_id);
+
+	float now_hp=player->Heal();
+	player->SetIsHeal(false);
+
+	auto& status_packet = m_PacketManager->SendStatusChange(player_id, now_hp);
+	room->RouteToAll(status_packet);
+
+	TryHealEvent(player);
 }
 
 bool InGameServer::CheckMoveOK(int enemy_id, int room_id)
@@ -472,4 +574,47 @@ bool InGameServer::CheckMoveOK(int enemy_id, int room_id)
 
 	return room->EnemyCollisionCheck(enemy);
 
+}
+
+void InGameServer::TryHealEvent(Player* player)
+{
+	if (false == player->IsDamaged())
+		return;
+	if (false == m_map_manager->CheckInRange(player->GetPos(), OBJ_TYPE::OT_HEAL_ZONE) &&
+		false == player->GetIsHeal())
+		return;
+	
+	int id = player->GetID();
+	player->SetIsHeal(true);
+	GS_GLOBAL::g_timer_queue.push(timer_event(id, id, player->GetRoomID(),
+		EVENT_TYPE::EVENT_HEAL, CONST_VALUE::HEAL_TIME));
+}
+
+void InGameServer::CallStateMachine(int enemy_id, int room_id)
+{
+	Enemy* enemy = MoveObjManager::GetInst()->GetEnemy(enemy_id);
+	Room* room = m_room_manager->GetRoom(room_id);
+	float comp_dist = sqrt(pow(abs(CONST_VALUE::g_ground_base_pos.x - enemy->GetPos().x), 2)
+		+ pow(abs(CONST_VALUE::g_ground_base_pos.z - enemy->GetPos().z), 2));
+	int comp_target_id = BASE_ID;
+
+	if (enemy->CheckTargetChangeTime() == true)
+	{
+		for (auto pl : room->GetObjList())
+		{
+			if (false == MoveObjManager::GetInst()->IsNear(pl->GetID(), enemy_id))//시야범위안에 있는지 확인
+				continue;
+			if (false == m_map_manager->CheckInRange(pl->GetPos(), OBJ_TYPE::OT_ACTIViTY_AREA)) continue;
+			float now_dist = MoveObjManager::GetInst()->ObjDistance(pl->GetID(), enemy_id);
+			if (comp_dist >= now_dist)
+			{
+				comp_dist = now_dist;
+				comp_target_id = pl->GetID();
+			}
+			
+		}
+		enemy->SetTargetId(comp_target_id);
+	}
+
+	enemy->CallLuaStateMachine();
 }

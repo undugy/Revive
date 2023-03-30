@@ -1,13 +1,12 @@
 #pragma once
 #pragma comment (lib, "WS2_32.LIB")
 #pragma comment (lib, "MSWSock.LIB")
-
 #include"define.h"
 #include <thread>
 #include <vector>
 #include<array>
 
-
+class EXP_OVER;
 class IOCPServer
 {
 public:

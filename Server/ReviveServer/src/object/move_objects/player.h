@@ -1,6 +1,6 @@
 #pragma once
 #include "move_object.h"
-
+#include"define.h"
 class Player :
     public MoveObj
 {
@@ -48,6 +48,8 @@ public:
     bool GetIsReady() { return m_is_ready; }
     void SetIsHeal(bool val) { m_is_heal = val; }
     bool GetIsHeal() { return m_is_heal; }
+    bool IsDamaged();
+    float Heal();
     char* GetPassword() { return m_password; }
     short GetMatchUserSize() { return m_mach_user_size; }
     void SetMatchUserSize(short val) { m_mach_user_size = val; }

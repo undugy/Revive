@@ -5,6 +5,17 @@
 using namespace std;
 const int MAX_THREAD = 12;
 
+namespace IOCP_GLOBAL
+{
+	HANDLE g_hiocp;
+
+};
+namespace GS_GLOBAL
+{
+	concurrency::concurrent_priority_queue <timer_event> g_timer_queue;
+}
+
+
 
 int main()
 {

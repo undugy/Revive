@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "db.h"
 #include"object/move_objects/player.h"
 #include<iostream>

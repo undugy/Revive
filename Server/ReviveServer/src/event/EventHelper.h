@@ -1,5 +1,5 @@
 #pragma once
-struct timer_event;
+class timer_event;
 class EventHelper
 {
 public:

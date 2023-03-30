@@ -2,10 +2,13 @@
 #include<unordered_map>
 #include<mutex>
 #include<chrono>
+#include<vector>
+#include"util/state.h"
+#include"protocol.h"
 
-class Object;
-class Player;
-class Enemy;
+#include"object/move_objects/player.h"
+#include"object/move_objects/enemy.h"
+
 class Room
 {
 public:
@@ -19,8 +22,8 @@ public:
 	void EnterRoom(Player* player);
 	void ResetRoom();
 
-	int GetCurrentUserSize() { return m_player_vec.size(); }
-	int GetCurrentEnemySize() { return m_enemy_vec.size(); }
+	size_t GetCurrentUserSize() { return m_player_vec.size(); }
+	size_t GetCurrentEnemySize() { return m_enemy_vec.size(); }
 	int GetRoomID() { return room_id; }
 	int GetMaxUser() { return max_user; }
 	int GetMaxEnemy() { return max_npc; }
@@ -38,11 +41,31 @@ public:
 	void InsertEnemy(Enemy* enemy);
 
 	template<typename Pk>
-	void RouteToOther(const Pk& packet,int sender_id);
+	void RouteToOther(Pk& packet, int sender_id)
+	{
+		for (Player* pl : m_player_vec)
+		{
+			if (pl->GetID() == sender_id)continue;
+			pl->DoSend(sizeof(packet), &packet);
+		}
+	}
 	template<typename Pk>
-	void RouteToAll(const Pk& packet);
+	void RouteToAll(Pk& packet)
+	{
+		for (Player* pl : m_player_vec)
+		{
+			pl->DoSend(sizeof(packet), &packet);
+		}
+	}
 	template<typename Pk>
-	void SendTo(const Pk& packet,int c_id);
+	void SendTo(Pk& packet, int c_id)
+	{
+		for (Player* pl : m_player_vec)
+		{
+			if (pl->GetID() != c_id)continue;
+			pl->DoSend(sizeof(packet), &packet);
+		}
+	}
 
 	bool CompleteMatching();
 	bool CheckPlayerReady();
@@ -50,7 +73,7 @@ public:
 	bool IsGameEnd();
 	void GameEnd();
 	bool EnemyCollisionCheck(Enemy* enemy);
-	const vector<Enemy*>& GetWaveEnemyList(int sordier_num, int king_num);
+	const std::vector<Enemy*> GetWaveEnemyList(int sordier_num, int king_num);
 	std::mutex m_base_hp_lock;
 	std::mutex m_state_lock;
 	

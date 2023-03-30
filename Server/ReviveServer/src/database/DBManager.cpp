@@ -2,6 +2,19 @@
 #include"database/db.h"
 #include<thread>
 using namespace std;
+DBManager::DBManager()
+{
+	
+		m_account_db = new DB;
+		m_account_db->Init();
+	
+}
+DBManager::~DBManager()
+{
+	if(m_account_db) {
+		delete m_account_db;
+	}
+}
 void DBManager::DBThread()
 {
 	while (true)

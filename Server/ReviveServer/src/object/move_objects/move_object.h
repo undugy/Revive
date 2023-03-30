@@ -1,6 +1,8 @@
 #pragma once
 #include"../object.h"
-
+#include<iostream>
+#include<mutex>
+#include<atomic>
 //플레이어와 npc의 부모
 class MoveObj :public Object
 {
@@ -37,6 +39,16 @@ public:
 	void SetMaxHP(float val) {  m_maxhp=val; }
 	void SetColorType(COLOR_TYPE val) { m_color_type = val; }
 	void SetRoomID(int val) { m_room_id = val; }
+	float Hit(float damage)
+	{
+		std::lock_guard<std::mutex>guard(this->m_hp_lock);
+		if (m_hp - damage < 0)
+			m_hp = 0;
+		SetHP(m_hp - damage);
+		return m_hp;
+	}
+
+
 
 	std::mutex m_hp_lock;
 	int		m_last_move_time=0;

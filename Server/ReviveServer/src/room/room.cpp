@@ -1,8 +1,6 @@
-#include "pch.h"
+
 #include "room.h"
-#include"object/object.h"
-#include"object/move_objects/player.h"
-#include"object/move_objects/enemy.h"
+
 #include"util/collision/collision_checker.h"
 using namespace std;
 Room::Room(int room_id):room_id(room_id),max_user(0),max_npc(0)
@@ -144,10 +142,10 @@ bool Room::EnemyCollisionCheck(Enemy* enemy)
 	return true;
 }
 
-const vector<Enemy*>& Room::GetWaveEnemyList(int sordier_num, int king_num)
+const vector<Enemy*> Room::GetWaveEnemyList(int sordier_num, int king_num)
 {
 	vector<Enemy*>spawn_vec;
-	int vec_size = 0;
+	size_t vec_size = 0;
 	for (Enemy* en : m_enemy_vec)
 	{
 		vec_size = spawn_vec.size();
@@ -172,34 +170,34 @@ const vector<Enemy*>& Room::GetWaveEnemyList(int sordier_num, int king_num)
 	// TODO: 여기에 return 문을 삽입합니다.
 }
 
-template<typename Pk>
-void Room::RouteToOther(const Pk& packet,int sender_id)
-{
-	for (Player* pl : m_player_vec)
-	{
-		if (pl->GetID() == sender_id)continue;
-		pl->DoSend(sizeof(packet), &packet);
-	}
-}
-
-template<typename Pk>
-void Room::RouteToAll(const Pk& packet)
-{
-	for (Player* pl : m_player_vec)
-	{
-		pl->DoSend(sizeof(packet), &packet);
-	}
-}
-
-template<typename Pk>
-void Room::SendTo(const Pk& packet,int c_id)
-{
-	for (Player* pl : m_player_vec)
-	{
-		if (pl->GetID() != c_id)continue;
-		pl->DoSend(sizeof(packet), &packet);
-	}
-}
+//template<typename Pk>
+//void Room::RouteToOther(const Pk& packet,int sender_id)
+//{
+//	for (Player* pl : m_player_vec)
+//	{
+//		if (pl->GetID() == sender_id)continue;
+//		pl->DoSend(sizeof(packet), &packet);
+//	}
+//}
+//
+//template<typename Pk>
+//void Room::RouteToAll(const Pk& packet)
+//{
+//	for (Player* pl : m_player_vec)
+//	{
+//		pl->DoSend(sizeof(packet), &packet);
+//	}
+//}
+//
+//template<typename Pk>
+//void Room::SendTo(const Pk& packet,int c_id)
+//{
+//	for (Player* pl : m_player_vec)
+//	{
+//		if (pl->GetID() != c_id)continue;
+//		pl->DoSend(sizeof(packet), &packet);
+//	}
+//}
 
 
 

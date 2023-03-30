@@ -38,6 +38,7 @@ bool Enemy::Init(OBJ_TYPE type)
 		break;
 	}
 	
+	return true;
 }
 
 void Enemy::SetSpawnPoint(float x, float z)
@@ -50,17 +51,20 @@ void Enemy::SetSpawnPoint(float x, float z)
 void Enemy::Reset()
 {
 	target_id = BASE_ID;
-	lua_lock.lock();
-	lua_close(m_L);
-	lua_lock.unlock();
+
 	m_room_id = -1;
 	m_attack_time = std::chrono::system_clock::now();
 	m_check_time = std::chrono::system_clock::now();
 	in_use=false;
-	in_game = false;
+
 	m_is_active = false;
 	ZeroMemory(m_name, MAX_NAME_SIZE + 1);
 	m_prev_test_pos=Vector3{ 0.0f,0.0f,0.0f };
+}
+
+void Enemy::SetAttackTime()
+{
+	m_attack_time = chrono::system_clock::now() + 1s;
 }
 
 void Enemy::DoMove(const Vector3& target_pos)
@@ -85,6 +89,38 @@ void Enemy::DoPrevMove(const Vector3& target_pos)
 	m_prev_pos = m_pos;
 	m_pos = npos;
 	m_collision.UpdateCollision(m_pos);
+}
+
+const vector<Vector3> Enemy::MakeWays(Vector3& target_vec)
+{
+	vector<Vector3>move_ways;
+	move_ways.reserve(10);
+	Vector3 target_right_vec = target_vec.Cross(Vector3(0.0f, 1.0f, 0.0f));
+	Vector3 target_diagonal_vec = target_right_vec + target_vec;
+	Vector3 target_diagonal_vec2 = (target_right_vec * -1) + target_vec;
+	move_ways.push_back(target_right_vec);
+	move_ways.push_back(target_diagonal_vec);
+	move_ways.push_back(target_diagonal_vec2);
+	for (int i = 0; i < move_ways.size(); ++i)
+		move_ways.push_back(move_ways[i] * -1);
+	
+	return move_ways;
+}
+
+bool Enemy::CheckTargetChangeTime()
+{
+	auto check_end_time = std::chrono::system_clock::now();
+	if (m_check_time <= check_end_time)
+	{
+		m_check_time = check_end_time + 1s;
+		return true;
+	}
+	return false;
+}
+
+void Enemy::CallLuaStateMachine()
+{
+	m_lua.CallStateMachine(this);
 }
 
 

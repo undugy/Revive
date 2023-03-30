@@ -270,7 +270,7 @@ Vector2 MapManager::GetRandomSpawnPoint()
 	uniform_int_distribution<int> random_point(0, 1);
 	spawn_area.reserve(10);
 
-	for (auto a : m_map_manager->GetMapObjVec())
+	for (const auto& a : GetMapObjVec())
 	{
 		if (OBJ_TYPE::OT_SPAWN_AREA != a.GetType())continue;
 		spawn_area.push_back(a);

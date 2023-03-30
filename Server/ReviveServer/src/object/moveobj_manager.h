@@ -1,8 +1,11 @@
 #pragma once
-#include<array>
-#include<vector>
-#include"move_objects/player.h"
+#include"move_objects/move_object.h"
 #include"move_objects/enemy.h"
+#include"move_objects/player.h"
+#include"protocol.h"
+#include<array>
+
+
 class MoveObjManager
 {
 private:
@@ -42,8 +45,7 @@ public:
 	bool IsPlayer(int id) { return (id >= 0) && (id < MAX_USER); }
 	bool IsNear(int a, int b);
 	float ObjDistance(int a, int b);
-	void InitLua(const char* script_name,int obj_id, const Vector3& base_pos);
-	void RegisterAPI(lua_State* L);
+	
 	
 	static void LuaErrorDisplay(lua_State* L,int err_num);
 	int GetNewID();
@@ -53,7 +55,7 @@ public:
 	void DestroyObject();
 	bool CheckLoginUser(char* user_id);
 private:
-	std::array <MoveObj*, MAX_USER + MAX_NPC>m_moveobj_arr;
+	std::array <MoveObj*, MAX_USER + MAX_NPC> m_moveobj_arr;
 	int m_id;
 };
 

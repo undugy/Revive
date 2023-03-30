@@ -5,7 +5,7 @@ using Vec2 = std::pair<short, short>;
 class Vector3
 {
 public:
-	Vector3() { x = 0; y = 0; z = 0; }
+	Vector3() { x = 0.f; y = 0.f; z = 0.f; }
 	Vector3(float x, float y, float z) :x(x), y(y), z(z) {}
 	float x, y, z;
 #ifndef 연산자오버로딩

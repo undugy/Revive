@@ -1,5 +1,5 @@
 #pragma once
-const float EPSILON = 0.0001;
+const float EPSILON = 0.0001f;
 
 class Vector2 {
 public:
@@ -11,7 +11,7 @@ public:
 	} 
 	/* 연산자 오버로딩을 통해 실제 벡터의 연산을 구현합니다. */ 
 	//벡터의 실수배 
-	Vector2 operator * (double r) const{ return Vector2(x*r, z*r); }
+	Vector2 operator * (float r) const{ return Vector2(x*r, z*r); }
 	float operator * (Vector2 r) const { return (x * r.x)+ (z * r.z); }
 	//벡터의 덧셈 
 	Vector2 operator + (Vector2 other) const{ 

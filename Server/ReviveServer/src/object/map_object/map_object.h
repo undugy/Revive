@@ -15,7 +15,7 @@ public:
 		SetMaxPos();
 		
 	};
-	MapObj() = default;
+	MapObj() { std::cout << "빈 MAP Object가 생성되었습니다." << std::endl; }
 	~MapObj()=default;
 	bool GetIsBlocked() { return m_is_blocking; }
 	const Vector3& GetMaxPos()const { return m_max_pos; }

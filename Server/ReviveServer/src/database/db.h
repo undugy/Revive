@@ -1,8 +1,8 @@
 #pragma once
-#include <sqlext.h> 
-#include<atomic>
 #include"define.h"
 
+#include<atomic>
+#include"util/state.h"
 class DB
 {
 public:
