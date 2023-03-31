@@ -23,27 +23,29 @@ DB::~DB()
 bool DB::Init()
 {
 	retcode = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
-
 	// Set the ODBC version environment attribute  
 	if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
 		retcode = SQLSetEnvAttr(henv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER*)SQL_OV_ODBC3, 0);
+
 
 		// Allocate connection handle  
 		if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
 			retcode = SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc);
 
+
 			// Set login timeout to 5 seconds  
 			if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
 				SQLSetConnectAttr(hdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER)5, 0);
-
+	
 				// Connect to data source  
-				retcode = SQLConnect(hdbc, (SQLWCHAR*)L"Revive_wireless2", SQL_NTS, (SQLWCHAR*)L"Revive_con", SQL_NTS, (SQLWCHAR*)L"revive",SQL_NTS);
+				retcode = SQLConnect(hdbc, (SQLWCHAR*)L"Revive_ODBC", SQL_NTS, (SQLWCHAR*)L"Revive_con", SQL_NTS, (SQLWCHAR*)L"revive",SQL_NTS);
 
 				// Allocate statement handle  
 				if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO) {
 					cout << "ODBC Connected\n";
 				
 				}
+		
 
 
 			}
@@ -62,13 +64,13 @@ LOGINFAIL_TYPE DB::SaveData(char*name,char*password)
 	mbstowcs_s(&len, wname, MAX_NAME_SIZE , name, MAX_NAME_SIZE );
 	mbstowcs_s(&len, wpassword, MAX_NAME_SIZE, password, MAX_PASSWORD_SIZE);
 	wsprintf(exec, L"EXEC insert_user_info @Param1=N'%ls',@Param2=%ls" ,wname, wpassword);
-	wcout << exec << endl;
+	//wcout << exec << endl;
 	retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
 	retcode = SQLExecDirect(hstmt, (SQLWCHAR*)exec, SQL_NTS);
 	if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO)
 	{
 		ret = LOGINFAIL_TYPE::SIGN_UP_OK;
-		cout << "历厘己傍\n";
+		//cout << "历厘己傍\n";
 	}
 	else
 	{
@@ -91,7 +93,7 @@ LOGINFAIL_TYPE DB::CheckLoginData(char* name, char* password)
 	LOGINFAIL_TYPE ret=LOGINFAIL_TYPE::OK;
 	mbstowcs_s(&len, wname, MAX_NAME_SIZE, name, MAX_NAME_SIZE);
 	wsprintf(exec, L"EXEC select_user_info @Param1=N'%ls'", wname);
-	wcout << exec << endl;
+	//wcout << exec << endl;
 	retcode = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
 	retcode = SQLExecDirect(hstmt, (SQLWCHAR*)exec, SQL_NTS);
 	if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO)

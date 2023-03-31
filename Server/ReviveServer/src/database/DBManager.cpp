@@ -40,10 +40,11 @@ void DBManager::ProcessDBTask(db_task& dt)
 		db_login_result result;
 		result.obj_id = dt.obj_id;
 		result.result = m_account_db->CheckLoginData(dt.user_id, dt.user_password);
+
 		if (result.result == LOGINFAIL_TYPE::OK)
 		{
 			
-			
+
 			//접속꽉찬거는 accept 쪽에서 보내기주기
 			//pl->state_lock.lock();
 			//if (STATE::ST_FREE == pl->GetState() || STATE::ST_ACCEPT == pl->GetState())
@@ -74,7 +75,7 @@ void DBManager::ProcessDBTask(db_task& dt)
 		LOGINFAIL_TYPE ret = m_account_db->CheckLoginData(dt.user_id, dt.user_password);
 		if (ret == LOGINFAIL_TYPE::NO_ID || ret == LOGINFAIL_TYPE::WRONG_PASSWORD)
 		{
-
+			//std::cout << "SaveData" << endl;
 			result.result = m_account_db->SaveData(dt.user_id, dt.user_password);
 			//SendSignUpOK(dt.obj_id);
 		}

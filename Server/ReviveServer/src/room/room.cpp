@@ -90,14 +90,23 @@ void Room::InitializeObject()
 		m_player_vec[i]->SetPos(CONST_VALUE::PLAYER_SPAWN_POINT[i]);
 		m_player_vec[i]->SetColorType(COLOR_TYPE(i + 1));
 	}
-	for (int i = 0; i < m_player_vec.size(); ++i)
+	int sk = 0;
+	int skk = 0;
+	for (int i = 0; i < m_enemy_vec.size(); ++i)
 	{
+		
 		if (i < SORDIER_PER_USER * max_user)
+		{
+			sk++;
 			m_enemy_vec[i]->Init(OBJ_TYPE::OT_NPC_SKULL);
+		}
 		else
+		{
+			skk++;
 			m_enemy_vec[i]->Init(OBJ_TYPE::OT_NPC_SKULLKING);
+		}
 	}
-	
+
 }
 
 bool Room::IsGameEnd()
@@ -142,30 +151,34 @@ bool Room::EnemyCollisionCheck(Enemy* enemy)
 	return true;
 }
 
-const vector<Enemy*> Room::GetWaveEnemyList(int sordier_num, int king_num)
+const unordered_set<Enemy*> Room::GetWaveEnemyList(int sordier_num, int king_num)
 {
-	vector<Enemy*>spawn_vec;
+	unordered_set<Enemy*>spawn_vec;
 	size_t vec_size = 0;
+	int sk = 0;
+	int skk = 0;
 	for (Enemy* en : m_enemy_vec)
 	{
 		vec_size = spawn_vec.size();
 		if (vec_size == sordier_num + king_num)
 			break;
-		if (en->GetIsActive() == true)
-			continue;
-		if (en->GetType() == OBJ_TYPE::OT_NPC_SKULL && vec_size < sordier_num)
+		if (en->IsActiveCAS(false, true))
 		{
-			en->SetIsActive(true);
-			spawn_vec.push_back(en);
-		}
-		else if (en->GetType() == OBJ_TYPE::OT_NPC_SKULLKING)
-		{
-			en->SetIsActive(true);
-			spawn_vec.push_back(en);
+			if (en->GetType() == OBJ_TYPE::OT_NPC_SKULL && vec_size < sordier_num)
+			{
+				sk++;
+				spawn_vec.insert(en);
+			}
+			else if (en->GetType() == OBJ_TYPE::OT_NPC_SKULLKING)
+			{	
+				skk++;
+				spawn_vec.insert(en);
+			}
 		}
 	}
+	cout << "현재 벡터 사이즈 : " << vec_size << "현재 해골" << sk << "현재 해골킹" << skk << endl;
 	if (spawn_vec.size() < sordier_num + king_num)
-		cout << "적 객체가 모자랍니다" << endl;
+		cout << "적 객체가 모자랍니다" <<", 현재 벡터 사이즈: "<<vec_size<<"현재 해골"<< sk <<"현재 해골킹"<< skk << endl;
 	return spawn_vec;
 	// TODO: 여기에 return 문을 삽입합니다.
 }

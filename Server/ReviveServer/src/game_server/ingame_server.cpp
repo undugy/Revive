@@ -45,7 +45,7 @@ bool InGameServer::OnRecv(int c_id, EXP_OVER* exp_over, DWORD num_bytes)
 
 void InGameServer::OnEvent(int c_id,EXP_OVER* exp_over)
 {
-	if (false == m_room_manager->IsRoomInGame(exp_over->room_id))
+	if (exp_over->room_id != -1 &&false == m_room_manager->IsRoomInGame(exp_over->room_id))
 	{
 		if (exp_over->_comp_op == COMP_OP::OP_FRESH_ROOM)
 		{
@@ -92,28 +92,32 @@ void InGameServer::OnEvent(int c_id,EXP_OVER* exp_over)
 	}
 	case COMP_OP::OP_LOGIN: {
 		db_login_result* result = reinterpret_cast<db_login_result*>(exp_over->_net_buf);
+		
 		Player*pl=MoveObjManager::GetInst()->GetPlayer(result->obj_id);
 		if (result->result == LOGINFAIL_TYPE::OK)
 		{
 			lock_guard<std::mutex>guard(pl->state_lock);
 			if (pl->GetState() == STATE::ST_ACCEPT)
 				pl->SetState(STATE::ST_LOGIN);
+
+			strcpy_s(pl->GetName(), MAX_NAME_SIZE, result->user_id);
+			strcpy_s(pl->GetPassword(), MAX_NAME_SIZE, result->user_password);
+			m_PacketManager->SendSignInOK(pl->GetID());
 		}
 		else
 		{
 			m_PacketManager->SendLoginFailPacket(result->obj_id, static_cast<int>(result->result));
-			break;
+			
 		}
-		strcpy_s(pl->GetName(), MAX_NAME_SIZE, result->user_id);
-		strcpy_s(pl->GetPassword(), MAX_NAME_SIZE, result->user_password);
-		m_PacketManager->SendSignInOK(pl->GetID());
+		
 		break;
 	}
 	case COMP_OP::OP_SIGNUP: {
-		db_login_result* result = reinterpret_cast<db_login_result*>(exp_over->_net_buf);
+		db_result* result = reinterpret_cast<db_result*>(exp_over->_net_buf);
 		Player* pl = MoveObjManager::GetInst()->GetPlayer(result->obj_id);
 		if (result->result == LOGINFAIL_TYPE::SIGN_UP_OK)
 		{
+		//cout << "OP SIGNUP" << endl;
 			m_PacketManager->SendSignUpOK(pl->GetID());
 		}
 		else
@@ -200,8 +204,10 @@ void InGameServer::RegisterProcessFunc()
 void InGameServer::ProcessSignIn(int c_id, unsigned char* p)
 {
 	cs_packet_sign_in* packet = reinterpret_cast<cs_packet_sign_in*>(p);
+	
 	if (MoveObjManager::GetInst()->CheckLoginUser(packet->name) == false)
 	{
+		cout << "이미 접속한 유저입니다" << endl;
 		m_PacketManager->SendLoginFailPacket(c_id, static_cast<int>(LOGINFAIL_TYPE::AREADY_SIGHN_IN));
 		return;
 	}
@@ -281,12 +287,13 @@ void InGameServer::ProcessMatching(int c_id, unsigned char* p)
 				break;
 
 			Enemy*e = MoveObjManager::GetInst()->GetEnemy(i);
-
-			if (false == e->in_use)
-			{
-				e->in_use = true;
+			if (e->InUseCAS(false,true))
 				room->InsertEnemy(e);
-			}
+			//if (e->in_use == false)
+			//{
+			//	e->in_use = true;
+			//	room->InsertEnemy(e);
+			//}
 
 		}
 		if (room->GetCurrentEnemySize() < room->GetMaxEnemy())
@@ -363,8 +370,9 @@ void InGameServer::ProcessDamageCheat(int c_id, unsigned char* p)
 void InGameServer::StartGame(int room_id)
 {
 	Room* room = m_room_manager->GetRoom(room_id);
+	
 	room->InitializeObject();
-
+	atomic_thread_fence(memory_order_seq_cst);
 	//주위객체 정보 보내주기는 event로 
 	//플레이어에게 플레이어 보내주기
 	int next_round = 1;
@@ -381,7 +389,7 @@ void InGameServer::StartGame(int room_id)
 	room->RouteToAll(wave_packet);
 
 	room->SetRoundTime(CONST_VALUE::ROUND_TIME);
-	GS_GLOBAL::g_timer_queue.push(timer_event{ room->GetRoomID(), room->GetRoomID(), room->GetRoomID(),
+	GS_GLOBAL::g_timer_queue.push(timer_event{ room_id, room_id, room_id,
 		EVENT_TYPE::EVENT_TIME, 1000 });
 }
 
@@ -401,8 +409,8 @@ void InGameServer::CountTime(EXP_OVER* exp_over)
 		if (room->GetRound() < CONST_VALUE::ROUND_MAX)
 		{
 			room->SetRound(room->GetRound() + 1);
-			GS_GLOBAL::g_timer_queue.push(timer_event{ room->GetRoomID(),
-				room->GetRoomID(), room->GetRoomID(), EVENT_TYPE::EVENT_NPC_SPAWN, 30 });
+			GS_GLOBAL::g_timer_queue.push(timer_event{ room_id,
+				room_id, room_id, EVENT_TYPE::EVENT_NPC_SPAWN, 30 });
 		}
 
 	}
@@ -423,6 +431,7 @@ void InGameServer::SpawnEnemy(int room_id)
 {
 	Room* room = m_room_manager->GetRoom(room_id);
 	int curr_round = room->GetRound();
+	
 	int sordier_num = room->GetMaxUser() * (curr_round + 1);
 	int king_num = room->GetMaxUser() * curr_round;
 	

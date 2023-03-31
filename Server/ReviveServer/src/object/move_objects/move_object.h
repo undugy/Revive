@@ -47,7 +47,10 @@ public:
 		SetHP(m_hp - damage);
 		return m_hp;
 	}
-
+	bool IsActiveCAS(bool old_val, bool new_val)
+	{
+		return std::atomic_compare_exchange_strong(&m_is_active, &old_val, new_val);
+	}
 
 
 	std::mutex m_hp_lock;

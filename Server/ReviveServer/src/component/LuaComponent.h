@@ -10,14 +10,14 @@ class LuaComponent
 {
 public:
 	LuaComponent(){
-
+		m_L=luaL_newstate();
 	}
 	 ~LuaComponent(){
 		 if (m_L)
 			 lua_close(m_L);
 	 }
 
-	 void Init(const char* script_name, Enemy* enemy);
+	 void Init(const char* script_name, Enemy*volatile enemy);
 	 void RegisterAPI();
 	 void LuaErrorDisplay(int err_num);
 	 lua_State* GetLua() { return m_L; }

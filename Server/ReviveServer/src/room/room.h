@@ -2,6 +2,7 @@
 #include<unordered_map>
 #include<mutex>
 #include<chrono>
+#include<unordered_set>
 #include<vector>
 #include"util/state.h"
 #include"protocol.h"
@@ -73,7 +74,7 @@ public:
 	bool IsGameEnd();
 	void GameEnd();
 	bool EnemyCollisionCheck(Enemy* enemy);
-	const std::vector<Enemy*> GetWaveEnemyList(int sordier_num, int king_num);
+	const std::unordered_set<Enemy*> GetWaveEnemyList(int sordier_num, int king_num);
 	std::mutex m_base_hp_lock;
 	std::mutex m_state_lock;
 	

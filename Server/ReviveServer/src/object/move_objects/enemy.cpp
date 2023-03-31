@@ -19,6 +19,7 @@ bool Enemy::Init(OBJ_TYPE type)
 		m_damage = SORDIER_DAMAGE;
 		m_collision = BoxCollision{ m_pos, SOLDIER_LOCAL_POS, SOLDIER_EXTENT, SOLDIER_SCALE };
 		strcpy_s(m_name, "Skull Soldier");
+	
 		m_lua.Init("src/lua/sclipt/enemy_sordier.lua", this);
 	}
 		break;
@@ -30,6 +31,7 @@ bool Enemy::Init(OBJ_TYPE type)
 		m_damage = SORDIER_DAMAGE;
 		m_collision = BoxCollision{ m_pos, KING_LOCAL_POS, KING_EXTENT, KING_SCALE };
 		strcpy_s(m_name, "Skull King");
+	
 		m_lua.Init("src/lua/sclipt/enemy_king.lua", this);
 	}
 		break;
@@ -98,10 +100,11 @@ const vector<Vector3> Enemy::MakeWays(Vector3& target_vec)
 	Vector3 target_right_vec = target_vec.Cross(Vector3(0.0f, 1.0f, 0.0f));
 	Vector3 target_diagonal_vec = target_right_vec + target_vec;
 	Vector3 target_diagonal_vec2 = (target_right_vec * -1) + target_vec;
+	move_ways.push_back(target_vec);
 	move_ways.push_back(target_right_vec);
 	move_ways.push_back(target_diagonal_vec);
 	move_ways.push_back(target_diagonal_vec2);
-	for (int i = 0; i < move_ways.size(); ++i)
+	for (int i = 0; i < 4; i++)
 		move_ways.push_back(move_ways[i] * -1);
 	
 	return move_ways;

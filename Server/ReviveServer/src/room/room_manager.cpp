@@ -43,23 +43,24 @@ int RoomManager::CreateMatchingRoom(int matchUserSize, Player* player)
 
 MATCHING_RESULT RoomManager::SearchMatchingRoom(int matchUserSize,Player*player)
 {
-	MATCHING_RESULT ret ;
+	MATCHING_RESULT ret=MATCHING_RESULT::NO_ROOM ;
 	for (Room* room : m_rooms)
 	{
 		if (room->GetMaxUser() != matchUserSize)
 			continue;
-		std::lock_guard<std::mutex>guard(room->m_state_lock);
+		room->m_state_lock.lock();
 		if (room->GetState() == ROOM_STATE::RT_MATCHING)
 		{
 			room->SetState(ROOM_STATE::RT_INGAME);
-			
+			room->m_state_lock.unlock();
 
 			if (room->GetCurrentUserSize() + 1 < matchUserSize)
 			{
 				room->EnterRoom(player);
 				
+				room->m_state_lock.lock();
 				room->SetState(ROOM_STATE::RT_MATCHING);
-				
+				room->m_state_lock.unlock();
 
 				ret= MATCHING_RESULT::NONE;
 				break;
@@ -72,6 +73,8 @@ MATCHING_RESULT RoomManager::SearchMatchingRoom(int matchUserSize,Player*player)
 			}
 			
 		}
+		else
+			room->m_state_lock.unlock();
 		
 	}
 	

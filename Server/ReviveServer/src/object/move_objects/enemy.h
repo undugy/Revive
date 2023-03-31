@@ -55,6 +55,10 @@ public:
     bool CheckTargetChangeTime();
     void CallLuaStateMachine();
 
+    bool InUseCAS(bool old_val,bool new_val)
+    {
+        return atomic_compare_exchange_strong(&in_use, &old_val, new_val);
+    }
 
 
     std::atomic_bool in_use;

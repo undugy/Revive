@@ -13,4 +13,5 @@ namespace CONST_VALUE
 	const int ROUND_MAX = 3;
 	const float HEURISTICS = 50.f;
 	const int ATTACK_INTERVAL = 1000;
+
 }
