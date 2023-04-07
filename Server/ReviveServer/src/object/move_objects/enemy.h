@@ -47,6 +47,7 @@ public:
     void SetAttackTime();
     void DoMove(const Vector3& target_pos);
     void DoPrevMove(const Vector3& target_pos);
+
     void SetToPrevPos() { 
         m_pos = m_prev_pos; 
         m_collision.UpdateCollision(m_pos);
@@ -55,22 +56,18 @@ public:
     bool CheckTargetChangeTime();
     void CallLuaStateMachine();
 
-    bool InUseCAS(bool old_val,bool new_val)
-    {
-        return atomic_compare_exchange_strong(&in_use, &old_val, new_val);
-    }
+    bool InUseCAS(bool old_val, bool new_val);
+    
 
 
-    std::atomic_bool in_use;
-    std::mutex lua_lock;
-    Vector3 m_prev_test_pos{ 0.0f,0.0f,0.0f };
 private:
+    Vector3 m_prev_test_pos{ 0.0f,0.0f,0.0f };
+    volatile bool in_use;
     std::chrono::system_clock::time_point	m_attack_time;
     std::chrono::system_clock::time_point	m_check_time;
     BoxCollision m_collision;
     LuaComponent m_lua;
     Vector3 m_prev_pos{ 0.0f,0.0f,0.0f };
-
     Vector3 m_look;
     std::atomic_int target_id;
 };

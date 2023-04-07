@@ -33,13 +33,12 @@ public:
 
 	Player* GetPlayer(int id) { 
 		
-		Player*p=((Player*)(m_moveobj_arr[id])); 
-		return p;
+		return reinterpret_cast<Player*>(m_moveobj_arr[id]);
 		
 	}
 	Enemy* GetEnemy(int id) {
-		//Enemy* e = ;
-		return ((Enemy*)(m_moveobj_arr[id]));
+	
+		return reinterpret_cast<Enemy*>(m_moveobj_arr[id]);
 	}
 	MoveObj* GetMoveObj(int id) { return m_moveobj_arr[id]; }
 	bool IsPlayer(int id) { return (id >= 0) && (id < MAX_USER); }
@@ -56,6 +55,6 @@ public:
 	bool CheckLoginUser(char* user_id);
 private:
 	std::array <MoveObj*, MAX_USER + MAX_NPC> m_moveobj_arr;
-	int m_id;
+
 };
 

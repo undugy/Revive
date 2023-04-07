@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "enemy.h"
-
+constexpr char* SKULL_PATH = "src/lua/sclipt/enemy_sordier.lua";
+constexpr char* KING_PATH = "src/lua/sclipt/enemy_king.lua";
 using namespace std;
 
 //기지 아이디= -1
@@ -19,8 +20,9 @@ bool Enemy::Init(OBJ_TYPE type)
 		m_damage = SORDIER_DAMAGE;
 		m_collision = BoxCollision{ m_pos, SOLDIER_LOCAL_POS, SOLDIER_EXTENT, SOLDIER_SCALE };
 		strcpy_s(m_name, "Skull Soldier");
-	
-		m_lua.Init("src/lua/sclipt/enemy_sordier.lua", this);
+		
+		m_lua.Init(SKULL_PATH);
+		m_lua.LuaInitializeEnemy(this);
 	}
 		break;
 	case OBJ_TYPE::OT_NPC_SKULLKING:
@@ -32,7 +34,9 @@ bool Enemy::Init(OBJ_TYPE type)
 		m_collision = BoxCollision{ m_pos, KING_LOCAL_POS, KING_EXTENT, KING_SCALE };
 		strcpy_s(m_name, "Skull King");
 	
-		m_lua.Init("src/lua/sclipt/enemy_king.lua", this);
+		
+		m_lua.Init(KING_PATH);
+		m_lua.LuaInitializeEnemy(this);
 	}
 		break;
 	default:
@@ -57,8 +61,7 @@ void Enemy::Reset()
 	m_room_id = -1;
 	m_attack_time = std::chrono::system_clock::now();
 	m_check_time = std::chrono::system_clock::now();
-	in_use=false;
-
+	InUseCAS(true, false);
 	m_is_active = false;
 	ZeroMemory(m_name, MAX_NAME_SIZE + 1);
 	m_prev_test_pos=Vector3{ 0.0f,0.0f,0.0f };
@@ -126,4 +129,11 @@ void Enemy::CallLuaStateMachine()
 	m_lua.CallStateMachine(this);
 }
 
+bool Enemy::InUseCAS(bool old_val, bool new_val)
+{
 
+	return atomic_compare_exchange_strong(
+		reinterpret_cast<volatile std::atomic_bool*>(&in_use), 
+		&old_val, 
+		new_val);
+}

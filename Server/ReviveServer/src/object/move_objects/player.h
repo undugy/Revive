@@ -21,7 +21,6 @@ public:
    virtual ~Player()=default;
    std::mutex state_lock;
    int		m_prev_size;
-   //std::atomic_bool is_matching = false;
     
 private:
     

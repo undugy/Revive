@@ -41,7 +41,7 @@ public:
 	void SetRoomID(int val) { m_room_id = val; }
 	float Hit(float damage)
 	{
-		std::lock_guard<std::mutex>guard(this->m_hp_lock);
+		std::lock_guard<std::mutex>guard{ this->m_hp_lock };
 		if (m_hp - damage < 0)
 			m_hp = 0;
 		SetHP(m_hp - damage);

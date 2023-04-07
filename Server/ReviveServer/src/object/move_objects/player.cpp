@@ -79,7 +79,7 @@ void Player::Reset()
 }
 
 bool Player::IsDamaged(){
-	std::lock_guard<std::mutex>guard(this->m_hp_lock);
+	std::lock_guard<std::mutex>guard{ this->m_hp_lock };
 	if (m_hp < m_maxhp)
 		return true;
 	else
@@ -88,7 +88,7 @@ bool Player::IsDamaged(){
 
 float Player::Heal()
 {
-	std::lock_guard<std::mutex>guard(this->m_hp_lock);
+	std::lock_guard<std::mutex>guard{ this->m_hp_lock };
 	m_hp += (PLAYER_HP / 10);
 	if (m_hp > m_maxhp)
 		m_hp = m_maxhp;
