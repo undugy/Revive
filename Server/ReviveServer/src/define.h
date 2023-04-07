@@ -52,7 +52,14 @@ public:
 
 
 
-struct db_task {
+class db_task {
+public:
+	db_task(int c_id,DB_TASK_TYPE type, char* id, char* pw) : dt(type), obj_id(c_id)
+	{
+		strcpy_s(user_id, id);
+		strcpy_s(user_password, pw);
+	};
+	db_task() = default;
 	int obj_id;
 	DB_TASK_TYPE dt;
 	char user_id[MAX_NAME_SIZE];
@@ -108,5 +115,7 @@ namespace CONST_VALUE
 	extern const int ROUND_MAX;
 	extern const float HEURISTICS;
 	extern const int ATTACK_INTERVAL;
+	extern const int MOVE_INTERVAL;
+
 }
 #include"lua/functions/lua_functions.h"
