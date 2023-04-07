@@ -141,70 +141,7 @@ void MapManager::LoadMap(const std::string& path)
 		col_index += act_info.collision_count;
 		//MapObj추가
 	}
-	BlockTileMap();
-}
 
-void MapManager::BlockTileMap()
-{
-	for (auto& map_obj : m_map_objects)
-	{
-		for (int i = 0; i < 36; ++i)
-		{
-			for (int j = 0; j < 16; ++j)
-			{
-				if (m_tile_map[i][j].type == MAP_OBJ_TYPE::NONE)
-				{
-					if (map_obj.GetMinPos().x <= m_tile_map[i][j].x && map_obj.GetMaxPos().x >= m_tile_map[i][j].x &&
-						map_obj.GetMinPos().z <= m_tile_map[i][j].z && map_obj.GetMaxPos().z >= m_tile_map[i][j].z)
-					{
-						if (true == map_obj.GetIsBlocked())
-							m_tile_map[i][j].type = MAP_OBJ_TYPE::BLOCK;
-						else
-							m_tile_map[i][j].type = MAP_OBJ_TYPE::UNBLOCK;
-						if (map_obj.GetType() == OBJ_TYPE::OT_BASE)m_tile_map[i][j].type = MAP_OBJ_TYPE::BASE;
-						else if(map_obj.GetType() == OBJ_TYPE::OT_SPAWN_AREA)m_tile_map[i][j].type = MAP_OBJ_TYPE::SPAWN_AREA;
-					}
-				}
-			}
-		}
-	}
-	int sx, sy;
-	int dx, dy;
-	for (int i = 0; i < 36; ++i)
-	{
-		for (int j = 0; j < 16; ++j)
-		{
-			if (m_tile_map[i][j].type == MAP_OBJ_TYPE::BLOCK)
-			{
-				cout << "1";
-			}
-			else if (m_tile_map[i][j].type == MAP_OBJ_TYPE::UNBLOCK)
-			{
-				cout << "2";
-			}
-			else if(m_tile_map[i][j].type == MAP_OBJ_TYPE::BASE )
-			{
-				cout << "B";
-				dy = i;
-				dx = j;
-			}
-			else if (m_tile_map[i][j].type == MAP_OBJ_TYPE::SPAWN_AREA)
-			{
-				sy = i;
-				sx = j;
-				cout << "S";
-			}
-			else
-			{
-				cout << "0";
-			}
-		}
-		cout << endl;
-	}
-	Astar* astar = new Astar;
-	bool ret=astar->SearchMapTileLoad(m_tile_map, sx, sy, dx, dy);
-	ret ? cout << "찾" : cout << "못찾";
-	delete astar;
 }
 
 

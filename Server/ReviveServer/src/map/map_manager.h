@@ -8,20 +8,10 @@ class MapManager
 {
 public:
 	MapManager() {
-		for (int i = 0; i < 36; ++i)
-		{
-			for (int j = 0; j < 16; ++j)
-			{
-				m_tile_map[i][j].x = j * 300.f + 150.f;
-				m_tile_map[i][j].z = i * 300.f + 150.f;
-				m_tile_map[i][j].type = MAP_OBJ_TYPE::NONE;
-			}
-		}
-		m_map_objects.reserve(100);
+		
 	};
 	~MapManager(){}
 	void LoadMap(const std::string& path);
-	void BlockTileMap();
 	bool CheckCollision(BoxCollision& obj_collision);
 	bool CheckInRange(BoxCollision& collision);
 	bool CheckInRange(const Vector3& pos,OBJ_TYPE map_type);
@@ -45,6 +35,6 @@ public:
 	// 2400 300 2850 베이스 그라운드 포즈
 private:
 	std::vector<MapObj>m_map_objects;
-	MapTile m_tile_map[36][16];
+
 };
 
