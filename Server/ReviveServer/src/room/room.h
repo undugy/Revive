@@ -9,7 +9,7 @@
 
 #include"object/move_objects/player.h"
 #include"object/move_objects/enemy.h"
-
+class Wave;
 class Room
 {
 public:
@@ -71,10 +71,11 @@ public:
 	bool CompleteMatching();
 	bool CheckPlayerReady();
 	void InitializeObject();
+	void MakeWave();
 	bool IsGameEnd();
 	void GameEnd();
 	bool EnemyCollisionCheck(Enemy* enemy);
-	const std::unordered_set<Enemy*> GetWaveEnemyList(int sordier_num, int king_num);
+	const Wave& GetWave(int round);
 	std::mutex m_base_hp_lock;
 	std::mutex m_state_lock;
 	
@@ -87,6 +88,7 @@ private:
 	int curr_round;
 	std::vector<Player*>m_player_vec;
 	std::vector<Enemy*>m_enemy_vec;
+	std::unordered_map<int, Wave> m_rounds;
 	std::chrono::system_clock::time_point	m_round_time;
 	float m_base_hp = BASE_HP;
 };

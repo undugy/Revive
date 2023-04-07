@@ -1,6 +1,6 @@
 
 #include "room.h"
-
+#include "Wave.h"
 #include"util/collision/collision_checker.h"
 using namespace std;
 Room::Room(int room_id):room_id(room_id),max_user(0),max_npc(0)
@@ -8,7 +8,7 @@ Room::Room(int room_id):room_id(room_id),max_user(0),max_npc(0)
 	m_round_time =chrono::system_clock::now();
 	m_room_state = ROOM_STATE::RT_FREE;
 	m_player_vec.reserve(10);
-	m_enemy_vec.reserve(100);
+	m_enemy_vec.reserve(60);
 }
 
 Room::~Room()
@@ -67,7 +67,6 @@ bool Room::CompleteMatching()
 		player->state_lock.lock();
 		player->SetState(STATE::ST_INGAME);
 		player->state_lock.unlock();
-		//player->is_matching = false;
 		player->SetIsActive(true);
 	}
 	return false;
@@ -90,23 +89,56 @@ void Room::InitializeObject()
 		m_player_vec[i]->SetPos(CONST_VALUE::PLAYER_SPAWN_POINT[i]);
 		m_player_vec[i]->SetColorType(COLOR_TYPE(i + 1));
 	}
-	int sk = 0;
-	int skk = 0;
+
 	for (int i = 0; i < m_enemy_vec.size(); ++i)
 	{
 		
 		if (i < SORDIER_PER_USER * max_user)
 		{
-			sk++;
 			m_enemy_vec[i]->Init(OBJ_TYPE::OT_NPC_SKULL);
 		}
 		else
 		{
-			skk++;
 			m_enemy_vec[i]->Init(OBJ_TYPE::OT_NPC_SKULLKING);
 		}
 	}
 
+}
+
+void Room::MakeWave()
+{
+	unordered_set<Enemy*> close_set;
+
+	
+	for (int i = 1; i <= CONST_VALUE::ROUND_MAX; ++i)
+	{
+		Wave wave{ i,max_user };
+		for (Enemy* en : m_enemy_vec)
+		{
+			if (wave.GetSize() == wave.GetKingNum() + wave.GetSordierNum())break;
+			if (close_set.count(en) == 1)continue;
+			if (en->GetType() == OBJ_TYPE::OT_NPC_SKULL && wave.GetSize() < wave.GetSordierNum())
+			{
+	
+				close_set.insert(en);
+				wave.PushEnemy(en);
+			}
+			else if (en->GetType() == OBJ_TYPE::OT_NPC_SKULLKING)
+			{
+	
+				close_set.insert(en);
+				wave.PushEnemy(en);
+			}
+		}
+		if (wave.GetSize() < wave.GetKingNum() + wave.GetSordierNum())
+		{
+			cout <<"방:"<<room_id<<", 라운드:"<<i<< "적절한 웨이브 생성이 되지 않았습니다." << endl;
+		}
+		m_rounds[i] = move(wave);
+	}
+
+	
+	
 }
 
 bool Room::IsGameEnd()
@@ -151,66 +183,13 @@ bool Room::EnemyCollisionCheck(Enemy* enemy)
 	return true;
 }
 
-const unordered_set<Enemy*> Room::GetWaveEnemyList(int sordier_num, int king_num)
+const Wave& Room::GetWave(int round)
 {
-	unordered_set<Enemy*>spawn_vec;
-	size_t vec_size = 0;
-	int sk = 0;
-	int skk = 0;
-	for (Enemy* en : m_enemy_vec)
-	{
-		vec_size = spawn_vec.size();
-		if (vec_size == sordier_num + king_num)
-			break;
-		if (en->IsActiveCAS(false, true))
-		{
-			if (en->GetType() == OBJ_TYPE::OT_NPC_SKULL && vec_size < sordier_num)
-			{
-				sk++;
-				spawn_vec.insert(en);
-			}
-			else if (en->GetType() == OBJ_TYPE::OT_NPC_SKULLKING)
-			{	
-				skk++;
-				spawn_vec.insert(en);
-			}
-		}
-	}
-	cout << "현재 벡터 사이즈 : " << vec_size << "현재 해골" << sk << "현재 해골킹" << skk << endl;
-	if (spawn_vec.size() < sordier_num + king_num)
-		cout << "적 객체가 모자랍니다" <<", 현재 벡터 사이즈: "<<vec_size<<"현재 해골"<< sk <<"현재 해골킹"<< skk << endl;
-	return spawn_vec;
-	// TODO: 여기에 return 문을 삽입합니다.
+	
+	return m_rounds[round];
+
 }
 
-//template<typename Pk>
-//void Room::RouteToOther(const Pk& packet,int sender_id)
-//{
-//	for (Player* pl : m_player_vec)
-//	{
-//		if (pl->GetID() == sender_id)continue;
-//		pl->DoSend(sizeof(packet), &packet);
-//	}
-//}
-//
-//template<typename Pk>
-//void Room::RouteToAll(const Pk& packet)
-//{
-//	for (Player* pl : m_player_vec)
-//	{
-//		pl->DoSend(sizeof(packet), &packet);
-//	}
-//}
-//
-//template<typename Pk>
-//void Room::SendTo(const Pk& packet,int c_id)
-//{
-//	for (Player* pl : m_player_vec)
-//	{
-//		if (pl->GetID() != c_id)continue;
-//		pl->DoSend(sizeof(packet), &packet);
-//	}
-//}
 
 
 
