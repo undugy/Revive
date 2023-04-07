@@ -19,13 +19,13 @@ void PacketManager::ProcessPacket(int c_id, unsigned char* p)
 {
 	unsigned char packet_type = p[1];
 	
-	if (m_recv_func_map[packet_type] == nullptr)
+	if (m_recv_func_map[packet_type])
 	{
-		cout << "등록되지 않은 함수를 실행하려고 했습니다." << endl;
+		m_recv_func_map[packet_type](c_id, p);
 	}
 	else
 	{
-		 m_recv_func_map[packet_type](c_id, p);
+		cout << "등록되지 않은 함수를 실행하려고 했습니다." << endl;
 	}
 
 }

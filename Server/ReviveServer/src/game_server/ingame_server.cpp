@@ -8,7 +8,7 @@
 #include"room/room_manager.h"
 #include"map/map_manager.h"
 #include"event/EventHelper.h"
-
+#include"room/Wave.h"
 using namespace std;
 
 
@@ -96,10 +96,14 @@ void InGameServer::OnEvent(int c_id,EXP_OVER* exp_over)
 		Player*pl=MoveObjManager::GetInst()->GetPlayer(result->obj_id);
 		if (result->result == LOGINFAIL_TYPE::OK)
 		{
-			lock_guard<std::mutex>guard(pl->state_lock);
+			pl->state_lock.lock();
 			if (pl->GetState() == STATE::ST_ACCEPT)
+			{
 				pl->SetState(STATE::ST_LOGIN);
-
+				pl->state_lock.unlock();
+			}
+			else
+				pl->state_lock.unlock();
 			strcpy_s(pl->GetName(), MAX_NAME_SIZE, result->user_id);
 			strcpy_s(pl->GetPassword(), MAX_NAME_SIZE, result->user_password);
 			m_PacketManager->SendSignInOK(pl->GetID());
@@ -117,7 +121,6 @@ void InGameServer::OnEvent(int c_id,EXP_OVER* exp_over)
 		Player* pl = MoveObjManager::GetInst()->GetPlayer(result->obj_id);
 		if (result->result == LOGINFAIL_TYPE::SIGN_UP_OK)
 		{
-		//cout << "OP SIGNUP" << endl;
 			m_PacketManager->SendSignUpOK(pl->GetID());
 		}
 		else
@@ -135,7 +138,7 @@ void InGameServer::Disconnect(int c_id)
 	MoveObjManager::GetInst()->Disconnect(c_id);
 	Player* cl = MoveObjManager::GetInst()->GetPlayer(c_id);
 
-	lock_guard<mutex>state_guard(cl->state_lock);
+	lock_guard<mutex>state_guard{ cl->state_lock };
 	if (cl->GetRoomID() == -1)
 		cl->SetState(STATE::ST_FREE);
 
@@ -184,8 +187,7 @@ void InGameServer::End()
 {
 	MoveObjManager::GetInst()->DestroyObject();
 	MoveObjManager::DestroyInst();
-	CloseHandle(IOCP_GLOBAL::g_hiocp);
-	closesocket(m_s_socket);
+
 
 }
 
@@ -211,23 +213,14 @@ void InGameServer::ProcessSignIn(int c_id, unsigned char* p)
 		m_PacketManager->SendLoginFailPacket(c_id, static_cast<int>(LOGINFAIL_TYPE::AREADY_SIGHN_IN));
 		return;
 	}
-	db_task dt;
-	dt.dt = DB_TASK_TYPE::SIGN_IN;
-	dt.obj_id = c_id;
-	strcpy_s(dt.user_id, packet->name);
-	strcpy_s(dt.user_password, packet->password);
-
+	db_task dt{ c_id,DB_TASK_TYPE::SIGN_IN ,packet->name,packet->password };
 	m_db_manager->PushTask(move(dt));
 }
 
 void InGameServer::ProcessSignUp(int c_id, unsigned char* p)
 {
 	cs_packet_sign_up* packet = reinterpret_cast<cs_packet_sign_up*>(p);
-	db_task dt;
-	dt.dt = DB_TASK_TYPE::SIGN_UP;
-	dt.obj_id = c_id;
-	strcpy_s(dt.user_id, packet->name);
-	strcpy_s(dt.user_password, packet->password);
+	db_task dt{ c_id,DB_TASK_TYPE::SIGN_UP ,packet->name,packet->password };
 	m_db_manager->PushTask(move(dt));
 }
 
@@ -270,47 +263,40 @@ void InGameServer::ProcessMatching(int c_id, unsigned char* p)
 	auto result = m_room_manager->SearchMatchingRoom(packet->user_num, pl);
 	switch (result)
 	{
-	case NONE:
-	{
-
-	}
-		break;
 	case COMPLETE:
 	{
 		int r_id = pl->GetRoomID();
 		Room* room = m_room_manager->GetRoom(r_id);
 		room->RouteToAll(m_PacketManager->SendMatchingOK());
 		room->CompleteMatching();
-		for (int i = NPC_ID_START; i <= NPC_ID_END; ++i)
-		{
-			if (room->GetCurrentEnemySize() == room->GetMaxEnemy())
+		auto start_t = chrono::system_clock::now();
+		while (room->GetCurrentEnemySize() != room->GetMaxEnemy()) {
+			auto end_t = chrono::system_clock::now();
+			if (end_t - start_t >= 1s)
+			{
+				cout << "Enemy Allocate Time Out" << endl;
 				break;
-
-			Enemy*e = MoveObjManager::GetInst()->GetEnemy(i);
-			if (e->InUseCAS(false,true))
-				room->InsertEnemy(e);
-			//if (e->in_use == false)
-			//{
-			//	e->in_use = true;
-			//	room->InsertEnemy(e);
-			//}
-
+			}
+			
+			for (int i = NPC_ID_START; i <= NPC_ID_END; ++i)
+			{
+				Enemy* e = MoveObjManager::GetInst()->GetEnemy(i);
+				if (e->InUseCAS(false, true))
+					room->InsertEnemy(e);
+			}
+			
 		}
-		if (room->GetCurrentEnemySize() < room->GetMaxEnemy())
-			cout << "할당할 수 있는 적 객체 수가 모자랍니다" << endl;
 	}
 		break;
 	case NO_ROOM:
 	{
 		if (-1 == m_room_manager->CreateMatchingRoom(packet->user_num, pl))
 		{
-			std::cout << "빈방이 없습니다!" << std::endl;
+			cout << "빈방이 없습니다!" << endl;
 		}
 	}
 		break;
-	
 	}
-	
 }
 
 void InGameServer::ProcessHit(int c_id, unsigned char* p)
@@ -372,7 +358,7 @@ void InGameServer::StartGame(int room_id)
 	Room* room = m_room_manager->GetRoom(room_id);
 	
 	room->InitializeObject();
-	atomic_thread_fence(memory_order_seq_cst);
+	room->MakeWave();
 	//주위객체 정보 보내주기는 event로 
 	//플레이어에게 플레이어 보내주기
 	int next_round = 1;
@@ -431,18 +417,17 @@ void InGameServer::SpawnEnemy(int room_id)
 {
 	Room* room = m_room_manager->GetRoom(room_id);
 	int curr_round = room->GetRound();
-	
-	int sordier_num = room->GetMaxUser() * (curr_round + 1);
-	int king_num = room->GetMaxUser() * curr_round;
-	
+	const Wave& wave = room->GetWave(curr_round);
 	if (curr_round < CONST_VALUE::ROUND_MAX) {
+		const Wave&  next_wave = room->GetWave(curr_round+1);
 		auto& wave_packet=m_PacketManager->SendWaveInfo(curr_round + 1, 
-			room->GetMaxUser() * (curr_round + 1), room->GetMaxUser() * (curr_round + 2));
+			next_wave.GetKingNum(), next_wave.GetSordierNum());
 	}
 
 	int interval = 0;
-	for (auto& en : room->GetWaveEnemyList(sordier_num, king_num))
+	for (auto en : wave.GetWaveEnemySet())
 	{
+		en->SetIsActive(true);
 		GS_GLOBAL::g_timer_queue.push(timer_event{en->GetID(),en->GetID(), room_id,
 			EVENT_TYPE::EVENT_NPC_TIMER_SPAWN,(1500 * (++interval)) });
 	}
@@ -468,7 +453,7 @@ void InGameServer::DoEnemyMove(int room_id, int enemy_id)
 	Enemy* enemy = MoveObjManager::GetInst()->GetEnemy(enemy_id);
 	if (false == enemy->GetIsActive())return;
 	Vector3 target_pos;
-	const Vector3 base_pos = m_map_manager->GetMapObjectByType(OBJ_TYPE::OT_BASE).GetGroundPos();
+
 	if (enemy->GetTargetId() == BASE_ID)
 		target_pos = CONST_VALUE::g_ground_base_pos;
 	else
@@ -577,7 +562,7 @@ bool InGameServer::CheckMoveOK(int enemy_id, int room_id)
 	
 	if (false == m_map_manager->CheckInRange(enemy->GetCollision()))
 		return false;
-	//이 부분도 가운데로 가도록
+
 	if (true == m_map_manager->CheckCollision(enemy->GetCollision()))
 		return false;
 

@@ -8,6 +8,9 @@ IOCPServer::IOCPServer()
 
 IOCPServer::~IOCPServer()
 {
+
+	CloseHandle(IOCP_GLOBAL::g_hiocp);
+	closesocket(m_s_socket);
 	WSACleanup();
 }
 
