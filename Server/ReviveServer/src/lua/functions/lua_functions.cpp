@@ -57,7 +57,7 @@ int API_attack(lua_State* L)
 		EVENT_TYPE::EVENT_NPC_ATTACK, static_cast<int>(mil.count()) });
 	else
 		GS_GLOBAL::g_timer_queue.push(timer_event{ npc_id, target_id, en->GetRoomID(),
-		EVENT_TYPE::EVENT_NPC_ATTACK, 1000 });
+		EVENT_TYPE::EVENT_NPC_ATTACK, CONST_VALUE::ATTACK_INTERVAL });
 
 	return 0;
 }
@@ -70,6 +70,6 @@ int API_move(lua_State* L)
 	Enemy* en = MoveObjManager::GetInst()->GetEnemy(npc_id);
 	en->SetTargetId(target_id);
 	GS_GLOBAL::g_timer_queue.push(timer_event{ en->GetID(), en->GetID(), en->GetRoomID(),
-		EVENT_TYPE::EVENT_NPC_MOVE,50 });
+		EVENT_TYPE::EVENT_NPC_MOVE,CONST_VALUE::MOVE_INTERVAL });
 	return 0;
 }
