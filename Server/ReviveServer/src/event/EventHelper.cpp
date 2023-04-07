@@ -71,15 +71,6 @@ void EventHelper::ProcessEvent(const timer_event& ev)
 		
 		ex_over->_comp_op = COMP_OP::OP_FRESH_ROOM;
 		ex_over->room_id = ev.room_id;
-		//TODO 여기에 방아이디 첨부해서 워커로 보내기
-		//delete ex_over;
-		 
-		//여기 로직은 옮기기
-		//Room* room = m_room_manager->GetRoom(ev.room_id);
-		//room->ResetRoom();
-		//room->m_state_lock.lock();
-		//room->SetState(ROOM_STATE::RT_FREE);
-		//room->m_state_lock.unlock();
 		break;
 	}
 	case EVENT_TYPE::EVENT_BASE_ATTACK: {
