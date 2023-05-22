@@ -1,4 +1,4 @@
-project "ReviveServer"--프로젝트 이름
+project "ReviveServer"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
@@ -15,11 +15,11 @@ project "ReviveServer"--프로젝트 이름
 		"src/**.lua",
 	}
 
-	includedirs--추가포함 디렉터리
+	includedirs
 	{
-		--"%{wks.location}/ClientFW/src",
-		--"%{wks.location}/ClientFW/vendor/spdlog/include",
-		"%{wks.location}/ReviveServer/src",--필수아닌 선택
+		
+		"%{wks.location}/ReviveServer/src",
+		"%{wks.location}/ReviveServer/lib/spdlog/include"
 	}
 	
 
@@ -27,7 +27,7 @@ project "ReviveServer"--프로젝트 이름
 		systemversion "latest"
 
 	filter "configurations:Debug"
-		defines "ReviveServer_DEBUG"--프로젝트 이름 요거랑 맞추기
+		defines "ReviveServer_DEBUG"
 		symbols "On"
 
 	filter "configurations:Release"
