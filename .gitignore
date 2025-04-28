@@ -398,12 +398,12 @@ MigrationBackup/
 
 # Binaries
 **Client/bin/
-!Client/vendor/premake/bin/
+
 Client/bin-int/
 Client/Contents/
 Client/**/Contents/
 **Server/bin/
-!Server/vendor/premake/bin/
+
 Server/bin-int/
 
 # PYC files
