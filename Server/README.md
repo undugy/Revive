@@ -19,6 +19,7 @@
 - 실질적인 로직은 PacketManager에서
 - PacketManager has RoomManager, MapManager, DB
 ```
+- <span style="background-color:#fff5b1">솔루션은 GenerateProject_2019/2022.bat 파일로 생성 가능합니다 </span>
 ## 02. 소스코드 설명
 ------
 ### 1. IOCPServer
